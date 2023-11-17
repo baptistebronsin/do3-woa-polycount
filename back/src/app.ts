@@ -1,9 +1,11 @@
-import express from 'express';
-const app = express();
-const port = 3000;
+import express, { Request, Response } from 'express';
+import * as core from "express-serve-static-core";
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+const app: core.Express = express();
+const port: number = 3000;
+
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).send('Hello World!');
 });
 
 app.listen(port, () => {
