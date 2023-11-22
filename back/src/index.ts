@@ -1,5 +1,5 @@
 import express from 'express';
-// import routes from './routes';
+import routes from './routes';
 const cors = require('cors');
 
 import dotenv from "dotenv";
@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.urlencoded({extended: false}));
 app.use(logger);
 app.use(express.json());
-// app.use(routes);
+app.use(routes);
 
 app.get('/api', (req, res) => {
     res.status(200).json({message: "Le serveur fonctionne !"});
