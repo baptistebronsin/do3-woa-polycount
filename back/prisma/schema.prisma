@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Utilisateur {
+  pk_utilisateur_id  Int                        @id @default(autoincrement())
+  nom                String                     @db.VarChar(50)
+  prenom             String                     @db.VarChar(50)
+  genre              String?                    @db.VarChar(4)
+  email              String                     @db.VarChar(250) @unique
+  mot_de_passe       String
+  cree_le            DateTime                   @default(now())
+  valide_le          DateTime?
+
+  groupes_crees      Groupe[]                   @relation("CreateurGroupe")
+  participant_groupe Participant_Groupe[]       @relation("ParticipantGroupe")
+  cree_depenses      Depense[]                  @relation("DepensesCreeUtilisateur")
+  liee_depenses      Utilisateur_Liee_Depense[] @relation("UtilisateurLieeDepenses")
+  tokens             Token[]                    @relation("TokenUtilisateur")
+  suspensions        Suspension[]               @relation("SuspensionsUtilisateur")
+
+  @@map("Utilisateur")
+}
+
+model Groupe {
+  pk_groupe_id               Int                  @id @default(autoincrement())
+  nom                        String?              @db.VarChar(50)
+  description                String?              @db.VarChar(200)
+  fk_utilisateur_createur_id Int
+  cree_le                    DateTime             @default(now())
+  cloture_le                 DateTime?
+  lien_image                 String?
+
+  utilisateur_createur       Utilisateur          @relation("CreateurGroupe", fields: [fk_utilisateur_createur_id], references: [pk_utilisateur_id])
+  participants               Participant_Groupe[] @relation("Participants")
+  depenses                   Depense[]            @relation("Depenses")
+
+  @@map("Groupe")
+}
+
+model Participant_Groupe {
+  pk_participant_groupe_id          Int         @id @default(autoincrement())
+  fk_utilisateur_id                 Int
+  fk_groupe_id                      Int
+  peut_creer_depense                Boolean
+  peut_modifier_depense             Boolean
+  peut_supprimer_depense            Boolean
+  peut_manipuler_tag                Boolean
+  peut_modifier_montant_max_depense Boolean
+  montant_max_depense               Float?
+  rejoint_le                        DateTime?
+  quitte_le                         DateTime?
+
+  utilisateur_participant           Utilisateur @relation("ParticipantGroupe", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
+  groupe                            Groupe      @relation("Participants", fields: [fk_groupe_id], references: [pk_groupe_id])
+
+  @@map("Participant_Groupe")
+}
+
+model Tag {
+  pk_tag_id Int       @id @default(autoincrement())
+  titre     String    @db.VarChar(40)
+  couleur   String    @db.VarChar(6)
+  icon      String    @db.VarChar(50)
+
+  depenses  Depense[] @relation("TagDepense")
+
+  @@map("Tag")
+}
+
+model Depense {
+  pk_depense_id              Int                         @id @default(autoincrement())
+  fk_groupe_id               Int
+  fk_utilisateur_createur_id Int
+  titre                      String?                     @db.VarChar(100)
+  montant                    Float
+  ajoute_le                  DateTime                    @default(now())
+  lien_image                 String?
+
+  groupe_lie                 Groupe                      @relation("Depenses", fields: [fk_groupe_id], references: [pk_groupe_id])
+  utilisateur_createur       Utilisateur                 @relation("DepensesCreeUtilisateur", fields: [fk_utilisateur_createur_id], references: [pk_utilisateur_id])
+  utilisateurs_lies          Utilisateur_Liee_Depense[]  @relation("DepensesLieeUtiliasteur")
+  tags                       Tag[]                       @relation("TagDepense")
+
+  @@map("Depense")
+}
+
+model Utilisateur_Liee_Depense {
+  fk_utilisateur_id Int
+  fk_depense_id     Int
+  montant           Float
+
+  utilisateur       Utilisateur @relation("UtilisateurLieeDepenses", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
+  depense           Depense     @relation("DepensesLieeUtiliasteur", fields: [fk_depense_id], references: [pk_depense_id])
+
+  @@id([fk_utilisateur_id, fk_depense_id])
+  @@map("Utilisateur_Liee_Depense")
+}
+
+model Token {
+  pk_token_id          Int         @id @default(autoincrement())
+  fk_utilisateur_id    Int
+  token                String
+  type_verification    String      @db.VarChar(20)
+  date_creation        DateTime    @default(now())
+  date_desactivation   DateTime
+  nombre_tentative     Int         @default(0)
+
+  utilisateur_concerne Utilisateur @relation("TokenUtilisateur", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
+
+  @@map("Token")
+}
+
+model Suspension {
+  pk_suspension_id     Int         @id @default(autoincrement())
+  fk_utilisateur_id    Int
+  date_ajout           DateTime    @default(now())
+  message_utilisateur  String?     @db.VarChar(300)
+  message_admin        String?     @db.VarChar(300)
+  date_debut           DateTime
+  date_fin             DateTime?
+
+  utilisateur_concerne Utilisateur @relation("SuspensionsUtilisateur", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
+
+  @@map("Suspension")
+}
