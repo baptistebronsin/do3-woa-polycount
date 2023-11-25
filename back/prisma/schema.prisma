@@ -19,6 +19,7 @@ model Utilisateur {
   mot_de_passe       String
   cree_le            DateTime                   @default(now())
   valide_le          DateTime?
+  desactive_le       DateTime?
 
   groupes_crees      Groupe[]                   @relation("CreateurGroupe")
   participant_groupe Participant_Groupe[]       @relation("ParticipantGroupe")
@@ -112,7 +113,6 @@ model Token {
   type_verification    String      @db.VarChar(20)
   date_creation        DateTime    @default(now())
   date_desactivation   DateTime
-  nombre_tentative     Int         @default(0)
 
   utilisateur_concerne Utilisateur @relation("TokenUtilisateur", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
 

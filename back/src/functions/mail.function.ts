@@ -1,12 +1,12 @@
 import * as nodemailer from 'nodemailer';
-import { logo_polycount, url_logo, longueur_logo_polycount, hauteur_logo_polycount } from '../images/logo_large.image';
+import { url_logo, longueur_logo_polycount, hauteur_logo_polycount } from '../images/logo_large.image';
 import dotenv from "dotenv";
 
 dotenv.config();
 
 export async function envoyer_mail(mail_destinataire: string, objet: string, corps: string): Promise<boolean> {
     try {
-        const transporter = nodemailer.createTransport({
+        let transporter = nodemailer.createTransport({
             host: 'mail.baraly.fr',
             port: 465,
             secure: true,
@@ -16,7 +16,7 @@ export async function envoyer_mail(mail_destinataire: string, objet: string, cor
             }
         });
 
-        const hauteur_logo: number = 180;
+        const hauteur_logo: number = 40;
         const longueur_logo: number = (hauteur_logo * longueur_logo_polycount) / hauteur_logo_polycount;
 
         const corps_logo: string = "<img src='" + url_logo + "' alt='Logo Polycount' width='" + longueur_logo + "' height='" + hauteur_logo + "' style='border-radius: 10px;'>";
@@ -29,7 +29,7 @@ export async function envoyer_mail(mail_destinataire: string, objet: string, cor
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Polycount</title>
             </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background: #EEEEEE; font-size: 18px;">
+            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background: #EEEEEE;">
             
                 <table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0">
                     <tr>
@@ -44,9 +44,9 @@ export async function envoyer_mail(mail_destinataire: string, objet: string, cor
                             </table>
             
                             <!-- Contenu principal de l'email -->
-                            <table style="background: white; border-radius: 10px" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <table style="background: white; border-radius: 10px; max-width: 700px;" align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td style="padding: 20px; padding-top: 0; width: 80%;">
+                                    <td style="padding: 20px; padding-top: 0;">
                                         ` + corps + `
                                     </td>
                                 </tr>
@@ -81,7 +81,8 @@ export async function envoyer_mail(mail_destinataire: string, objet: string, cor
 
         return true;
     }
-    catch (err: any) {        
+    catch (err: any) {
+        console.log(err);
         return false;
     }
 }

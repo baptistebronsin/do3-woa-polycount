@@ -29,7 +29,7 @@ export const authentification: any = (req: Request, res: Response, next: NextFun
     }
 }
 
-export const genere_token: any = (user: any) => {
+export const genere_token: any = (utilisateur_id: number) => {
     const token_secret: string = process.env.CLE_TOKEN!
-    return Jwt.sign({data: user}, token_secret, {expiresIn: process.env.EXPIRATION_JWTOKEN})
+    return Jwt.sign({data: utilisateur_id}, token_secret, {expiresIn: process.env.EXPIRATION_JWTOKEN})
 }
