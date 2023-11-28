@@ -1,7 +1,7 @@
 import { RequestHandler, Request, Response } from "express";
 import moment from "moment";
 import bcryptjs from "bcryptjs"
-import Jwt from "jsonwebtoken";
+import crypto from 'crypto';
 import { capitalize_name } from "../functions/capitalise_name.function";
 import { email_valide, genre_valide } from "../functions/verification.function";
 import * as utilisateur_service from "../services/utilisateur.service";
@@ -12,7 +12,7 @@ import { Suspension, Token, Utilisateur } from "@prisma/client";
 import dotenv from "dotenv";
 import { envoyer_mail } from "../functions/mail.function";
 import { genere_token } from "../middlewares/token.middleware";
-import { moment_date_format, moment_date_time_format } from "../utils/moment.utils";
+import { moment_date_time_format } from "../utils/moment.utils";
 import { genre_utilisateur } from "../functions/genre.function";
 import { temps_validation } from "../utils/token.utils";
 
@@ -79,7 +79,7 @@ export const creation_compte: RequestHandler = async (req: Request, res: Respons
         });
     }
     
-    const token: string = Jwt.sign({sujet: "vérification du compte", email: email_formate}, process.env.CLE_TOKEN!, {expiresIn: temps_validation[type_token] + "h"});
+    const token: string = crypto.randomBytes(100).toString('hex');
 
     try {
         await utilisateur_service.ajouter_token(utilisateur_cree.pk_utilisateur_id, token, type_token, temps_validation[type_token]);
@@ -422,7 +422,7 @@ export const mot_de_passe_oublie: RequestHandler = async (req: Request, res: Res
             message: "Votre compte n'a pas encore été vérifié, veuillez contacter le support : " + process.env.MAIL!
         });
 
-    const token: string = Jwt.sign({sujet: "mot de passe oublié", email: email_formate}, process.env.CLE_TOKEN!, {expiresIn: temps_validation[type_token] + "h"});
+    const token: string = crypto.randomBytes(100).toString('hex');
     try {
         await utilisateur_service.ajouter_token(utilisateur_existant.pk_utilisateur_id, token, type_token, temps_validation[type_token]);
     } catch (error: PrismaClientKnownRequestError | any) {
@@ -609,7 +609,7 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
     }
 
     // On créé un token pour faire vérifier son compte
-    const token: string = Jwt.sign({sujet: "vérification du compte", email: email_formate}, process.env.CLE_TOKEN!, {expiresIn: temps_validation[type_token] + "h"});
+    const token: string = crypto.randomBytes(100).toString('hex');
 
     try {
         await utilisateur_service.ajouter_token(utilisateur_existant.pk_utilisateur_id, token, type_token, temps_validation[type_token]);
