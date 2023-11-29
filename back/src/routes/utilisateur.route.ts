@@ -9,6 +9,7 @@ utilisateur_router.post('/connexion', utilisateur_controller.connexion);
 utilisateur_router.get('/verification_compte', utilisateur_controller.verification_compte);
 utilisateur_router.put('/modifier_email_non_verifie', utilisateur_controller.modification_email_non_verifie);
 utilisateur_router.put('/mot_de_passe_oublie', utilisateur_controller.mot_de_passe_oublie);
+utilisateur_router.put('/modifier_mot_de_passe_oublie', utilisateur_controller.modification_mot_de_passe_oublie);
 
 utilisateur_router.get('/informations', authentification, utilisateur_controller.informations_utilisateur);
 utilisateur_router.patch('/modifier_informations', authentification, utilisateur_controller.modification_informations);

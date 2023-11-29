@@ -446,6 +446,93 @@ export const mot_de_passe_oublie: RequestHandler = async (req: Request, res: Res
     });
 }
 
+export const modification_mot_de_passe_oublie: RequestHandler = async (req: Request, res: Response) => {
+    const {email, token, mot_de_passe} = req.body;
+
+    if (!email || !token || !mot_de_passe)
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans la requête.",
+            parametres: ["email", "token", "mot_de_passe"]
+        });
+
+    const email_formate: string = email.toLowerCase();
+
+    if (!email_valide(email_formate))
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Veuillez saisir une adresse email valide."
+        });
+    
+    let utilisateur_existant: Utilisateur | null = null;
+
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_email(email);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun utilisateur n'a été trouvé."
+            });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la vérification de l'existance de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let token_actif: Token | undefined;
+
+    try {
+        const tokens: Token[] = await utilisateur_service.recuperer_tous_tokens(utilisateur_existant.pk_utilisateur_id);
+
+        token_actif = tokens.find((token_find: Token) => token_find.fk_utilisateur_id == utilisateur_existant.pk_utilisateur_id && token_find.type_verification == "Pol02" && token_find.token == token);
+
+        if (!token_actif)
+            return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+                message: "Aucun token n'a été trouvé."
+            });
+
+        if (token_actif.date_creation > new Date() || token_actif.date_desactivation < new Date())
+            return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+                message: "Ce token ne peut pas être utilisable.",
+                data: token_actif
+            });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la vérification du token.",
+            erreur: error
+        });
+    }
+
+    const mot_de_passe_crypte = await bcryptjs.hash(mot_de_passe, 8);
+
+    try {
+        await utilisateur_service.modifier_utilisateur({
+            ...utilisateur_existant,
+            mot_de_passe: mot_de_passe_crypte
+        });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la modification du mot de passe.",
+            erreur: error
+        });
+    }
+
+    try {
+        await utilisateur_service.modifier_token({
+            ...token_actif,
+            date_desactivation: new Date()
+        });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la modification de la date de désactivation du token.",
+            erreur: error
+        });
+    }
+
+    return res.status(http_response_util.statuts.succes.ok).json({
+        message: "Le mot de passe a bien été mis à jour."
+    });
+}
+
 export const informations_utilisateur: RequestHandler = async (req: Request, res: Response) => {
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;
