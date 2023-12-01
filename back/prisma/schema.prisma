@@ -27,6 +27,7 @@ model Utilisateur {
   liee_depenses      Utilisateur_Liee_Depense[] @relation("UtilisateurLieeDepenses")
   tokens             Token[]                    @relation("TokenUtilisateur")
   suspensions        Suspension[]               @relation("SuspensionsUtilisateur")
+  moyens_paiements   Moyen_Paiement[]           @relation("MoyenPaiementUtilisateur")
 
   @@map("Utilisateur")
 }
@@ -131,4 +132,145 @@ model Suspension {
   utilisateur_concerne Utilisateur @relation("SuspensionsUtilisateur", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
 
   @@map("Suspension")
+}
+
+model Caracteristique_Abonnement {
+  pk_caracteristique_abonnement_id Int @id @default(autoincrement())
+  nom String @db.VarChar(50)
+  description String? @db.VarChar(300)
+  nombre_max_groupe Int?
+  nombre_max_participant_par_groupe Int?
+  nombre_max_depense_par_groupe Int?
+  couleur_clair String? @db.VarChar(8)
+  couleur_sombre String? @db.VarChar(8)
+  stripe_product_id String @db.VarChar(200)
+
+  abonnements Abonnement[] @relation("CaracteristiqueAbonnement")
+
+  @@map("Caracteristique_Abonnement")
+}
+
+model Abonnement {
+  pk_abonnement_id Int @id @default(autoincrement())
+  fk_caracteristique_abonnement_id Int
+  prix Float
+  periodicite String @db.VarChar(13)
+  date_debut DateTime @default(now())
+  date_fin DateTime?
+  stripe_price_id String @db.VarChar(200)
+
+  caracteristique Caracteristique_Abonnement @relation("CaracteristiqueAbonnement", fields: [fk_caracteristique_abonnement_id], references: [pk_caracteristique_abonnement_id])
+  codes_reductions Code_Reduction[] @relation("CodeReductionAbonnement")
+  offres_speciales Offre_Speciale[] @relation("OffreSpecialeAbonnement")
+  souscriptions Souscription_Abonnement[] @relation("SouscriptionAbonnementAbonnement")
+
+  @@map("Abonnement")
+}
+
+model Code_Reduction {
+  pk_code_reduction_id Int @id @default(autoincrement())
+  code String @db.VarChar(30) @unique
+  fk_abonnement_id Int
+  description String @db.VarChar(300)
+  reduction Float
+  duree_reduction Int
+  est_utilisable Boolean
+  nombre_maximum_utilisation Int?
+  date_debut DateTime
+  date_fin DateTime?
+  stripe_coupon_id String @db.VarChar(200)
+  stripe_promotion_id String @db.VarChar(200)
+
+  abonnement Abonnement @relation("CodeReductionAbonnement", fields: [fk_abonnement_id], references: [pk_abonnement_id])
+
+  souscription Souscription_Abonnement[] @relation("SouscriptionAbonnementCodeReduction")
+
+  @@map("Code_Reduction")
+}
+
+model Offre_Speciale {
+  pk_offre_speciale_id Int @id @default(autoincrement())
+  fk_abonnement_id Int
+  description_offre_speciale String @db.VarChar(300)
+  pourcentage_annonce Int
+  prix_reduit Float
+  duree_reduction Int
+  nombre_maximum_utilisation Int?
+  date_debut DateTime @default(now())
+  date_fin DateTime?
+  stripe_coupon_id String @db.VarChar(200)
+
+  abonnement Abonnement @relation("OffreSpecialeAbonnement", fields: [fk_abonnement_id], references: [pk_abonnement_id])
+
+  souscription Souscription_Abonnement[] @relation("SouscriptionAbonnementOffreSpeciale")
+
+  @@map("Offre_Speciale")
+}
+
+model Carte_Bancaire {
+  pk_carte_bancaire_id Int @id @default(autoincrement())
+  type_carte String @db.VarChar(30)
+  derniers_numeros String @db.VarChar(4)
+  mois_expiration Int
+  annee_expiration Int
+  ligne_1_facturation String @db.VarChar(200)
+  ligne_2_facturation String @db.VarChar(50)
+  ville_facturation String @db.VarChar(50)
+  code_postal_facturation String @db.VarChar(20)
+  pays_facturation String @db.VarChar(30)
+  nom_facturation String @db.VarChar(100)
+  stripe_payment_method_id String @db.VarChar(200)
+
+  moyens_paiements Moyen_Paiement[] @relation("MoyenPaiementCarteBancaire")
+
+  @@map("Carte_Bancaire")
+}
+
+model Moyen_Paiement {
+  pk_moyen_paiement_id Int @id @default(autoincrement())
+  fk_utilisateur_id Int
+  fk_carte_bancaire Int
+  date_desactivation DateTime?
+
+  utilisateur Utilisateur @relation("MoyenPaiementUtilisateur", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
+  carte_bancaire Carte_Bancaire @relation("MoyenPaiementCarteBancaire", fields: [fk_carte_bancaire], references: [pk_carte_bancaire_id])
+  souscriptions Souscription_Abonnement[] @relation("SouscriptionAbonnementMoyenPaiement")
+
+  @@map("Moyen_Paiement")
+}
+
+model Souscription_Abonnement {
+  pk_souscription_abonnement_id Int @id @default(autoincrement())
+  fk_abonnement_id Int
+  fk_moyen_paiement_id Int
+  fk_code_reduction_id Int?
+  fk_offre_speciale_id Int?
+  date_souscription_abonnement DateTime
+  date_debut DateTime
+  date_fin DateTime?
+  stripe_subscription_id String @db.VarChar(200)
+
+  abonnement Abonnement @relation("SouscriptionAbonnementAbonnement", fields: [fk_abonnement_id], references: [pk_abonnement_id])
+  moyen_paiement Moyen_Paiement @relation("SouscriptionAbonnementMoyenPaiement", fields: [fk_moyen_paiement_id], references: [pk_moyen_paiement_id])
+  code_reduction Code_Reduction? @relation("SouscriptionAbonnementCodeReduction", fields: [fk_code_reduction_id], references: [pk_code_reduction_id])
+  offre_speciale Offre_Speciale? @relation("SouscriptionAbonnementOffreSpeciale", fields: [fk_offre_speciale_id], references: [pk_offre_speciale_id])
+
+  paiements Paiement_Abonnement[] @relation("PaiementAbonnementSouscriptionAbonnement")
+
+  @@map("Souscription_Abonnement")
+}
+
+model Paiement_Abonnement {
+  pk_paiement_abonnement_id Int @id @default(autoincrement())
+  fk_souscription_abonnement_id Int
+  prix_paye Float
+  date_paiement DateTime
+  etat String @db.VarChar(20)
+  moyen_paiement String @db.VarChar(20)
+  date_debut DateTime
+  date_fin DateTime
+
+  souscription Souscription_Abonnement @relation("PaiementAbonnementSouscriptionAbonnement", fields: [fk_souscription_abonnement_id], references: [pk_souscription_abonnement_id])
+
+  @@map("Paiement_Abonnement")
 }
