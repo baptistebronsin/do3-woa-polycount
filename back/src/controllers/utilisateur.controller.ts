@@ -15,6 +15,8 @@ import { genere_token } from "../middlewares/token.middleware";
 import { moment_date_time_format } from "../utils/moment.utils";
 import { genre_utilisateur } from "../functions/genre.function";
 import { temps_validation } from "../utils/token.utils";
+import stripe from '../utils/stripe.utils';
+import Stripe from "stripe";
 
 dotenv.config();
 
@@ -68,10 +70,25 @@ export const creation_compte: RequestHandler = async (req: Request, res: Respons
         });
     }
 
+    let utilisateur_stripe: Stripe.Customer;
+
+    try {
+        // On créé l'utilisateur dans l'espace Stripe
+        utilisateur_stripe = await stripe.customers.create({
+            name: prenom_formate + " " + nom_formate,
+            email: email_formate
+        });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la création du customer Stripe.",
+            erreur: error
+        });
+    }
+
     let utilisateur_cree: Utilisateur | null = null;
     
     try {
-        utilisateur_cree = await utilisateur_service.ajouter_utilisateur(nom_formate, prenom_formate, genre_formate, email_formate, mot_de_passe_crypte);
+        utilisateur_cree = await utilisateur_service.ajouter_utilisateur(nom_formate, prenom_formate, genre_formate, email_formate, mot_de_passe_crypte, utilisateur_stripe.id);
     } catch (error) {
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
             message: "Une erreur serveur est survenue lors de la création de l'utilisateur.",
@@ -343,6 +360,20 @@ export const modification_email_non_verifie: RequestHandler = async (req: Reques
         });
     }
 
+    try {
+        // On met à jour les informations de l'utilisateur dans Stripe
+        await stripe.customers.update(
+            utilisateur_existant.stripe_customer_id,
+            {
+                email: email_formate
+            });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la mise à jour du customer Stripe.",
+            erreur: error
+        });
+    }
+
     // On modifie l'email dans la bdd
     try {
         await utilisateur_service.modifier_utilisateur({
@@ -556,7 +587,12 @@ export const informations_utilisateur: RequestHandler = async (req: Request, res
 
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Voici vos informations",
-        data: utilisateur_existant
+        data: {
+            ...utilisateur_existant,
+            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
+            valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
+            desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null,
+        }
     });
 }
 
@@ -595,6 +631,20 @@ export const modification_informations: RequestHandler = async (req: Request, re
     } catch (error: PrismaClientKnownRequestError | any) {
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
             message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    try {
+        // On met à jour les informations de l'utilisateur dans Stripe
+        await stripe.customers.update(
+            utilisateur_existant.stripe_customer_id,
+            {
+                name: prenom_formate + " " + nom_formate
+            });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la mise à jour du customer Stripe.",
             erreur: error
         });
     }
@@ -680,6 +730,22 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
         return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
             message: "Cette adresse email est déjà associé à votre compte."
         });
+
+    try {
+        // On met à jour les informations de l'utilisateur dans Stripe
+        await stripe.customers.update(
+            utilisateur_existant.stripe_customer_id,
+            {
+                email: email_formate
+            });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la mise à jour du customer Stripe.",
+            erreur: error
+        });
+    }
+
+    
 
     // On modifie les informations de l'utilisateur dans la bdd
     try {

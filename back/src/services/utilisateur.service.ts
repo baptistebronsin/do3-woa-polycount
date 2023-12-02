@@ -2,14 +2,15 @@ import { PrismaClient, Suspension, Token, Utilisateur } from '@prisma/client'
 
 const prisma: PrismaClient = new PrismaClient()
 
-export const ajouter_utilisateur = async (nom: string, prenom: string, genre: string | null, email: string, mot_de_passe: string): Promise<Utilisateur> => {
+export const ajouter_utilisateur = async (nom: string, prenom: string, genre: string | null, email: string, mot_de_passe: string, stripe_id: string): Promise<Utilisateur> => {
     const result: Utilisateur = await prisma.utilisateur.create({
         data: {
             nom: nom,
             prenom: prenom,
             genre: genre,
             email: email,
-            mot_de_passe: mot_de_passe
+            mot_de_passe: mot_de_passe,
+            stripe_customer_id: stripe_id
         }
     });
 
