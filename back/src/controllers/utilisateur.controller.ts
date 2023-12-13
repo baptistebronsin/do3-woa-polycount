@@ -160,7 +160,7 @@ export const connexion: RequestHandler = async (req: Request, res: Response) => 
         });
 
     // On compare le mot de passe à celui de la bdd
-    bcryptjs.compare(mot_de_passe, utilisateur_existant.mot_de_passe, async (err: any, result: any) => {
+    bcryptjs.compare(mot_de_passe, utilisateur_existant.mot_de_passe, async (err: any, result: boolean) => {
         if (err)
             return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
                 message: "Une erreur serveur est survenue lors de la vérification du mot de passes de l'utilisateur."
@@ -170,47 +170,48 @@ export const connexion: RequestHandler = async (req: Request, res: Response) => 
             return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
                 message: "L'email ou le mot de passe est incorrect."
             });
-    });
 
-    // Si l'utilisateur possède une suspension
-    try {
-        const suspension_utilisateur: Suspension | null = await utilisateur_service.recuperer_suspension(utilisateur_existant.pk_utilisateur_id, new Date());
+        // Si l'utilisateur possède une suspension
+        try {
+            const suspension_utilisateur: Suspension | null = await utilisateur_service.recuperer_suspension(utilisateur_existant.pk_utilisateur_id, new Date());
 
-        if (suspension_utilisateur)
-            return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
-                message: "Votre compte a été suspendu.",
-                data: suspension_utilisateur
+            if (suspension_utilisateur)
+                return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+                    message: "Votre compte a été suspendu.",
+                    data: suspension_utilisateur
+                });
+        } catch (error: PrismaClientKnownRequestError | any) {
+            return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de la vérification des suspensions.",
+                erreur: error
             });
-    } catch (error: PrismaClientKnownRequestError | any) {
-        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
-            message: "Une erreur serveur est survenue lors de la vérification des suspensions.",
-            erreur: error
-        });
-    }
+        }
 
-    // Si le compte a été vérifie, alors on génère un token de connexion
-    if (utilisateur_existant.valide_le)
-        return res.status(http_response_util.statuts.succes.ok).json({
-            message: "Connexion réussie.",
-            data: {
-                ...utilisateur_existant,
-                cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-                valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-                desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-            },
-            token: genere_token(utilisateur_existant.pk_utilisateur_id)
-        });
-    else
-        return res.status(http_response_util.statuts.succes.ok).json({
-            message: "Connexion réussie. Veuillez faire vérifier votre compte.",
-            data: {
-                ...utilisateur_existant,
-                cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-                valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-                desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-            },
-            token: null
-        });
+        // Si le compte a été vérifie, alors on génère un token de connexion
+        if (utilisateur_existant.valide_le)
+            return res.status(http_response_util.statuts.succes.ok).json({
+                message: "Connexion réussie.",
+                data: {
+                    ...utilisateur_existant,
+                    cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
+                    valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
+                    desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
+                },
+                token: genere_token(utilisateur_existant.pk_utilisateur_id)
+            });
+        else
+            return res.status(http_response_util.statuts.succes.ok).json({
+                message: "Connexion réussie. Veuillez faire vérifier votre compte.",
+                data: {
+                    ...utilisateur_existant,
+                    cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
+                    valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
+                    desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
+                },
+                token: null
+            });
+
+    });
 }
 
 export const verification_compte: RequestHandler = async (req: Request, res: Response) => {

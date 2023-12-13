@@ -38,7 +38,7 @@ CREATE TABLE Participant_Groupe (
     peut_modifier_depense BOOLEAN NOT NULL DEFAULT TRUE,
     peut_supprimer_depense BOOLEAN NOT NULL DEFAULT TRUE,
     peut_manipuler_tag BOOLEAN NOT NULL DEFAULT TRUE,
-    peut_modifier_montant_max_depense BOOLEAN DEFAULT TRUE,
+    peut_modifier_montant_max_depense BOOLEAN NOT NULL DEFAULT TRUE,
     montant_max_depense FLOAT DEFAULT NULL,
     rejoint_le TIMESTAMP DEFAULT NULL, -- NULL s'il est invité mais n'a pas encore rejoint
     quitte_le TIMESTAMP DEFAULT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE Tag_Lie_Depense (
 CREATE TABLE Utilisateur_Lie_Depense (
     fk_utilisateur_id INTEGER NOT NULL,
     fk_depense_id INTEGER NOT NULL,
-    montant FLOAT DEFAULT NULL,
+    montant FLOAT NOT NULL,
     PRIMARY KEY (fk_utilisateur_id, fk_depense_id),
     FOREIGN KEY (fk_utilisateur_id) REFERENCES Utilisateur (pk_utilisateur_id),
     FOREIGN KEY (fk_depense_id) REFERENCES Depense (pk_depense_id)
@@ -86,6 +86,8 @@ CREATE TABLE Suspension (
     pk_suspension_id SERIAL PRIMARY KEY,
     fk_utilisateur_id INTEGER NOT NULL,
     date_ajout TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    message_utilisateur VARCHAR(300) DEFAULT NULL,
+    message_admin VARCHAR(300) DEFAULT NULL,
     date_debut DATE NOT NULL,
     date_fin DATE DEFAULT NULL,
     FOREIGN KEY (fk_utilisateur_id) REFERENCES Utilisateur (pk_utilisateur_id)

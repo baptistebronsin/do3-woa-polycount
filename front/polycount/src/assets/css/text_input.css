@@ -1,0 +1,26 @@
+.input-container {
+    position: relative;
+  }
+  
+  .input-container label {
+    position: absolute;
+    top: 0;
+    left: 10px;
+    background-color: white;
+    padding: 0 5px;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 14px;
+  }
+  
+  .input-container input {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 16px;
+  }
+  
+  .input-container input:focus {
+    outline: none;
+  }

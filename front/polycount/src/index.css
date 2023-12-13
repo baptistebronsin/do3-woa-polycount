@@ -1,13 +1,38 @@
+@font-face {
+  font-family: 'Sansation';
+  src: local('Sansation'), url('./assets/fonts/Sansation_Regular.ttf')
+}
+
+html{
+  height: 100%;
+}
+
+#root{
+  height: 100%;
+}
+
 body {
+  height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  background-color: #EEEEEE;
+  font-family: 'Sansation', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 18px;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+input:-webkit-autofill {
+  background-color: white !important; /* ou une autre couleur de fond souhaitée */
+  transition: background-color 500ms ease-in-out 0s;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

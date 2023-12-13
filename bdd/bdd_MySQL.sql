@@ -38,7 +38,7 @@ CREATE TABLE Participant_Groupe (
     peut_modifier_depense BOOLEAN NOT NULL DEFAULT 1,
     peut_supprimer_depense BOOLEAN NOT NULL DEFAULT 1,
     peut_manipuler_tag BOOLEAN NOT NULL DEFAULT 1,
-    peut_modifier_montant_max_depense BOOLEAN DEFAULT 1,
+    peut_modifier_montant_max_depense BOOLEAN NOT NULL DEFAULT 1,
     montant_max_depense FLOAT DEFAULT NULL,
     rejoint_le DATETIME DEFAULT NULL, /* S'il est invité mais n'a pas encore rejoint */
     quitte_le DATETIME DEFAULT NULL,
