@@ -17,15 +17,39 @@ function Connexion() {
                 mot_de_passe: mot_de_passe
             });
 
-            toast.success(reponse.data.message);
+            if ('message' in reponse.data) {
+                toast.success(reponse.data.message);
+            } else {
+                toast.success("Opération acceptée.");
+            }
+            
         } catch (erreur) {
             if (erreur instanceof AxiosError) {
                 if (erreur.code == "ERR_NETWORK") {
-                    toast.error("Impossible de se connecter au serveur");
+                    toast.error("Impossible de se connecter au serveur.");
+                } else if (erreur.response && erreur.response.data) {
+                    if ('status' in erreur.response) {
+                        if (erreur.response.status == 500) {
+                            if ('message' in erreur.response.data) {
+                                toast.error(erreur.response.data.message);
+                            } else {
+                                toast.error("Une erreur serveur est survenue.");
+                            }
+                        } else {
+                            if ('message' in erreur.response.data) {
+                                toast.warning(erreur.response.data.message);
+                            } else {
+                                toast.warning("Une erreur serveur est survenue.");
+                            }
+                        }
+                    } else {
+                        toast.error("Le serveur n'a retourné aucun statut.");
+                    }
+                } else {
+                    toast.error("Le serveur n'a retourné aucune donnée.");
                 }
-                else {
-                    toast.warning(erreur.response?.data.message);
-                }
+            } else {
+                toast.error("Une erreur critique indéfinie est survenue.");
             }
         }
     }
