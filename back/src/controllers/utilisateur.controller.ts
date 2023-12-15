@@ -46,13 +46,13 @@ export const creation_compte: RequestHandler = async (req: Request, res: Respons
             message: "Veuillez saisir une adresse email valide."
         });
 
-    const email_domaine: string[] = email_formate.split('@')[1].split('.');
+    // const email_domaine: string[] = email_formate.split('@')[1].split('.');
 
-    // Si l'envoie de mail posera problème avec le domaine
-    if (mail_utils.domaines_black_liste.find((email: string) => email == email_domaine[email_domaine.length - 2]))
-        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
-            message: "Les adresses email '" + email_domaine[email_domaine.length - 2] + "' ne sont pas prises en charge."
-        });
+    // // Si l'envoie de mail posera problème avec le domaine
+    // if (mail_utils.domaines_black_liste.find((email: string) => email == email_domaine[email_domaine.length - 2]))
+    //     return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+    //         message: "Les adresses email '" + email_domaine[email_domaine.length - 2] + "' ne sont pas prises en charge."
+    //     });
 
     const mot_de_passe_crypte = await bcryptjs.hash(mot_de_passe, 8);
 
@@ -465,7 +465,7 @@ export const mot_de_passe_oublie: RequestHandler = async (req: Request, res: Res
     }
 
     const mail = mail_utils.contenu.reinitialisation_mot_de_passe;
-    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/mot_de_passe_oublie/" + utilisateur_existant.email + "/" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.APP_URL! + "/mot-de-passe-oublie?email=" + utilisateur_existant.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
     const etat_mail: boolean = await envoyer_mail(email_formate, mail.entete, contenu_mail);
 
     if (!etat_mail)
@@ -476,6 +476,66 @@ export const mot_de_passe_oublie: RequestHandler = async (req: Request, res: Res
     return res.status(http_response_util.statuts.succes.cree).json({
         message: "Un mail contenant un lien de réinitialisation de mot de passe vous a été envoyé."
     });
+}
+
+export const verifier_mot_de_passe_token_valide: RequestHandler = async (req: Request, res: Response) => {
+    const {email, token} = req.body;
+
+    if (!email || !token)
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans la requête.",
+            parametres: ["email", "token"]
+        });
+
+        const email_formate: string = email.toLowerCase();
+
+    if (!email_valide(email_formate))
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Veuillez saisir une adresse email valide."
+        });
+    
+    let utilisateur_existant: Utilisateur | null = null;
+
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_email(email);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun utilisateur n'a été trouvé."
+            });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la vérification de l'existance de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let token_actif: Token | undefined;
+
+    try {
+        const tokens: Token[] = await utilisateur_service.recuperer_tous_tokens(utilisateur_existant.pk_utilisateur_id);
+
+        token_actif = tokens.find((token_find: Token) => token_find.fk_utilisateur_id == utilisateur_existant.pk_utilisateur_id && token_find.type_verification == "Pol02" && token_find.token == token);
+
+        if (!token_actif)
+            return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+                message: "Aucun token ne correspond au vôtre."
+            });
+
+        return res.status(http_response_util.statuts.succes.ok).json({
+            message: "Voici les données pour ces informations.",
+            data: {
+                ...token_actif,
+                date_creation: moment(token_actif.date_creation).format(moment_date_time_format),
+                date_desactivation: moment(token_actif.date_desactivation).format(moment_date_time_format)
+            }
+        });
+    } catch (error: any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la vérification du token.",
+            erreur: error
+        });
+    }
 }
 
 export const modification_mot_de_passe_oublie: RequestHandler = async (req: Request, res: Response) => {
