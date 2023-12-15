@@ -1,13 +1,16 @@
 import { MouseEventHandler, useEffect, useState } from "react";
-import TextInput from "../../components/test_input.component";
+import TextInput from "../../components/text_input.component";
 import Selecteur from "../../components/selecteur.component";
 import { Link } from "react-router-dom";
+import { AxiosResponse } from "axios";
+import requete_api from "../../utils/requete_api.util";
+import { toast } from "sonner";
 
 function Inscription() {
 
     const [page_inscription, set_page_inscription] = useState<number>(1);
 
-    const genres: { value: string, label: string }[] = [{ value: "m", label: "M" }, { value: "mme", label: "Mme" }, { value: "mlle", label: "Mlle" }, { value: "rien", label: "Aucun" }];
+    const genres: { value: string, label: string }[] = [{ value: "m", label: "M" }, { value: "mme", label: "Mme" }, { value: "mlle", label: "Mlle" }, { value: "", label: "Aucun" }];
 
     const [nom, set_nom] = useState<string>("");
     const [prenom, set_prenom] = useState<string>("");
@@ -18,20 +21,79 @@ function Inscription() {
     const [mot_de_passe2, set_mot_de_passe2] = useState<string>("");
 
     const [erreur_page1, set_erreur_page1] = useState<string | null>(null);
+    const [erreur_page2, set_erreur_page2] = useState<string | null>(null);
 
     useEffect(() => {
         set_erreur_page1(null);
     }, [nom, prenom]);
 
+    useEffect(() => {
+        set_erreur_page2(null);
+    }, [email, mot_de_passe1, mot_de_passe2]);
+
     const verifie_premiere_page_correcte = (e: any) => {
         e.preventDefault();
 
-        if (nom == "" || prenom == "") {
+        if (nom === "" || prenom === "") {
             set_erreur_page1("Veuillez remplir tous les champs.");
-        } else {
-            set_erreur_page1(null);
-            set_page_inscription(2);
+            return null;
         }
+
+        set_erreur_page1(null);
+        set_page_inscription(2);
+    }
+
+    const erreur_mot_de_passe = (): string | null => {
+        if(mot_de_passe1.length < 10)
+            return "Veuillez utiliser un mot de passe d'au moins 10 caractères.";
+        if (!/[&#@$*+\-!]/.test(mot_de_passe1))
+            return "Veuillez utiliser un mot de passe contenant au moins un caractère spécial.";
+        if (!/[A-Z]/.test(mot_de_passe1))
+            return "Veuillez utiliser un mot de passe contenant au moins une majuscule.";
+        if (!/[0-9]/.test(mot_de_passe1))
+            return "Veuillez utiliser un mot de passe contenant au moins un chiffre.";
+
+        return null;
+    }
+
+    const inscription_api = async (e: any) => {
+        e.preventDefault();
+
+        if (email === "" || mot_de_passe1 === "" || mot_de_passe2 === "") {
+            set_erreur_page2("Veuillez remplir tous les champs.");
+            return null;
+        }
+
+        const email_regex: RegExp = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (!email_regex.test(email)) {
+            set_erreur_page2("Veuillez saisir une adresse email valide.");
+            return null;
+        }
+
+        const erreur_mdp: string | null = erreur_mot_de_passe();
+        if (erreur_mdp !== null) {
+            set_erreur_page2(erreur_mdp);
+            return null;
+        }
+
+        if (mot_de_passe1 !== mot_de_passe2) {
+            set_erreur_page2("Veuillez saisir les mêmes mots de passe.");
+            return null;
+        }
+
+        const api_body: any = {
+            nom: nom,
+            prenom: prenom,
+            genre: genre,
+            email: email,
+            mot_de_passe: mot_de_passe1
+        };
+
+        const reponse: AxiosResponse | null = await requete_api('POST', "/utilisateur/inscription", api_body);
+
+        if (reponse)
+            toast.success("Votre compte a bien été créé !");
     }
 
     return (
@@ -46,9 +108,9 @@ function Inscription() {
                                 <div className="grid-2-auto gap20">
                                     <div>
                                         <form>
-                                            <TextInput label="Nom" type="text" placeholder="Votre nom" value={nom} onChange={(e: any) => set_nom(e.target.value)} />
+                                            <TextInput label="Nom" type="text" placeholder="Votre nom" value={nom} onChange={(e: any) => set_nom(e.target.value)} required />
                                             <div style={{ height: '20px' }}></div>
-                                            <TextInput label="Prénom" type="text" placeholder="Votre prénom" value={prenom} onChange={(e: any) => set_prenom(e.target.value)} />
+                                            <TextInput label="Prénom" type="text" placeholder="Votre prénom" value={prenom} onChange={(e: any) => set_prenom(e.target.value)} required />
                                             <div style={{ height: '20px' }}></div>
                                             <Selecteur label="Genre" options={genres} valeur_defaut={genre} changement={set_genre} />
                                             <div style={{ height: '20px' }}></div>
@@ -69,29 +131,34 @@ function Inscription() {
                                     </div>
                                 </div> :
                                 <form>
-                                    <></>
                                     <div className="grid-2-auto gap60">
                                         <div>
-                                            <TextInput label="Email" type="mail" placeholder="Votre email" value={email} onChange={(e: any) => set_email(e.target.value)} />
+                                            <TextInput label="Email" type="mail" placeholder="Votre email" value={email} onChange={(e: any) => set_email(e.target.value)} required />
                                             <div style={{ height: '20px' }}></div>
                                             <p>Notre but n’est pas de vous harceler avec des emails. Vous ne recevrez que le strict nécéssaire.</p>
                                         </div>
                                         <div>
-                                            <TextInput label="Mot de passe" type="password" placeholder="Créez un mot de passe" value={mot_de_passe1} onChange={(e: any) => set_mot_de_passe1(e.target.value)} />
+                                            <TextInput label="Mot de passe" type="password" placeholder="Créez un mot de passe" value={mot_de_passe1} onChange={(e: any) => set_mot_de_passe1(e.target.value)} required />
                                             <div style={{ height: '20px' }}></div>
-                                            <TextInput label="Mot de passe*" type="password" placeholder="Vérifiez le mot de passe" value={mot_de_passe2} onChange={(e: any) => set_mot_de_passe2(e.target.value)} />
+                                            <TextInput label="Mot de passe*" type="password" placeholder="Vérifiez le mot de passe" value={mot_de_passe2} onChange={(e: any) => set_mot_de_passe2(e.target.value)} required />
                                         </div>
                                     </div>
-                                    <div style={{ height: '20px' }}></div>
+                                    {
+                                        erreur_page2 ?
+                                        <div className="centre" style={{ marginBottom: '10px' }}>
+                                            <span style={{ color: 'red' }}>{ erreur_page2 }</span>
+                                        </div> :
+                                        <></>
+                                    }
                                     <div className="centre">
-                                        <button className="full-button" onClick={() => alert("GOOOO")}>M'inscrire</button>
+                                        <button className="full-button" onClick={inscription_api}>M'inscrire</button>
                                     </div>
                                 </form>
                             }
                         
                         <div>
                             <p className="inline-block">Vous possédez déjà un compte ?&nbsp;</p>
-                            <Link className="inline-block" to='/connexion'>connectez-vous</Link>
+                            <Link className="inline-block lien" to='/connexion'>connectez-vous</Link>
                         </div>
                     </div>
                 </div>

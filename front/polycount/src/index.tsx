@@ -7,8 +7,8 @@ import './assets/css/selecteur.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Inscription from './pages/authentification/inscription.page';
 import Connexion from './pages/authentification/connexion.page';
-import MotDePasseOublie from './pages/authentification/mot_de_passe_oublie.page';
 import { Toaster } from 'sonner';
+import IndexMotDePasseOublie from './pages/authentification/mot_de_passe_oublie/index.page';
 
 ReactDOM.render(
   <>
@@ -18,7 +18,7 @@ ReactDOM.render(
           <Route path='/'/>
           <Route path='/inscription' element={ <Inscription /> } />
           <Route path='/connexion' element={ <Connexion /> } />
-          <Route path='/mot_de_passe_oublie' element={ <MotDePasseOublie /> } />
+          <Route path='/mot-de-passe-oublie' element={ <IndexMotDePasseOublie /> } />
         </Routes>
       </Router>
     </React.StrictMode>

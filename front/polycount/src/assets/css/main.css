@@ -54,12 +54,13 @@
     display: inline-block;
 }
 
-a {
+.lien {
     color: #4B7BB4;
 }
 
-a:hover {
+.lien:hover {
     cursor: pointer;
+    text-decoration: underline;
 }
 
 .full-button {

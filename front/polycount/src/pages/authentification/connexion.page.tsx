@@ -1,56 +1,50 @@
 import { Link } from "react-router-dom";
-import TextInput from "../../components/test_input.component";
-import { useState } from "react";
-import axios, { AxiosError } from "axios";
+import TextInput from "../../components/text_input.component";
+import { useEffect, useState } from "react";
+import { AxiosResponse } from "axios";
 import { toast } from "sonner";
+import requete_api from "../../utils/requete_api.util";
+import LoaderSpinner from "../../components/loader_spinner.component";
 
 function Connexion() {
     const [email, set_email] = useState<string>("");
     const [mot_de_passe, set_mot_de_passe] = useState<string>("");
 
-    const requete_api = async (e: any) => {
+    const [erreur_page, set_erreur_page] = useState<string | null>(null);
+
+    const [chargement, set_chargement] = useState<boolean>(false);
+
+    useEffect(() => {
+        set_erreur_page(null);
+    }, [email, mot_de_passe]);
+
+    const connexion_api = async (e: any) => {
         e.preventDefault();
 
-        try {
-            const reponse = await axios.post('http://localhost:8080/utilisateur/connexion', {
-                email: email,
-                mot_de_passe: mot_de_passe
-            });
+        if (email === "" || mot_de_passe === "") {
+            set_erreur_page("Veuillez remplir tous les champs.");
+            return null;
+        }
 
-            if ('message' in reponse.data) {
-                toast.success(reponse.data.message);
-            } else {
-                toast.success("Opération acceptée.");
-            }
-            
-        } catch (erreur) {
-            if (erreur instanceof AxiosError) {
-                if (erreur.code == "ERR_NETWORK") {
-                    toast.error("Impossible de se connecter au serveur.");
-                } else if (erreur.response && erreur.response.data) {
-                    if ('status' in erreur.response) {
-                        if (erreur.response.status == 500) {
-                            if ('message' in erreur.response.data) {
-                                toast.error(erreur.response.data.message);
-                            } else {
-                                toast.error("Une erreur serveur est survenue.");
-                            }
-                        } else {
-                            if ('message' in erreur.response.data) {
-                                toast.warning(erreur.response.data.message);
-                            } else {
-                                toast.warning("Une erreur serveur est survenue.");
-                            }
-                        }
-                    } else {
-                        toast.error("Le serveur n'a retourné aucun statut.");
-                    }
-                } else {
-                    toast.error("Le serveur n'a retourné aucune donnée.");
-                }
-            } else {
-                toast.error("Une erreur critique indéfinie est survenue.");
-            }
+        const email_regex: RegExp = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (!email_regex.test(email)) {
+            set_erreur_page("Veuillez saisir une adresse email valide.");
+            return null;
+        }
+
+        const api_body: any = {
+            email: email,
+            mot_de_passe: mot_de_passe
+        };
+
+        set_chargement(true);
+
+        const reponse: AxiosResponse | null = await requete_api('POST', "/utilisateur/connexion", api_body);
+
+        set_chargement(false);
+        if (reponse) {
+            toast.success("Votre connexion a bien fonctionné.");
         }
     }
 
@@ -67,20 +61,37 @@ function Connexion() {
                             </div>
                             <div>
                                 <form>
-                                    <TextInput label="Email" type="text" placeholder="Votre email" value={email} onChange={(e: any) => set_email(e.target.value)} />
+                                    <TextInput label="Email" type="email" placeholder="Votre email" value={email} onChange={(e: any) => set_email(e.target.value)} required />
                                     <div style={{ height: '30px' }}></div>
-                                    <TextInput label="Mot de passe" type="password" placeholder="Votre mot de passe" value={mot_de_passe} onChange={(e: any) => set_mot_de_passe(e.target.value)} />
-                                    <Link to='/mot_de_passe_oublie' style={{ fontSize: '16px' }}>Mot de passe oublié ?</Link>
-                                    <div style={{ height: '30px' }}></div>
+                                    <TextInput label="Mot de passe" type="password" placeholder="Votre mot de passe" value={mot_de_passe} onChange={(e: any) => set_mot_de_passe(e.target.value)} required />
+                                    <Link className="inline-block lien" to='/mot-de-passe-oublie' style={{ fontSize: '16px' }}>Mot de passe oublié ?</Link>
+                                    {
+                                        erreur_page ?
+                                        <>
+                                            <div style={{ height: '10px' }}></div>
+                                            <div className="centre" style={{ marginBottom: '10px' }}>
+                                                <span style={{ color: 'red' }}>{ erreur_page }</span>
+                                                <div style={{ height: '10px' }}></div>
+                                            </div>
+                                        </> :
+                                        <div style={{ height: '30px' }}></div>
+                                    }
                                     <div className="centre">
-                                        <button className="full-button" onClick={requete_api}>Me connecter</button>
+                                        {
+                                            chargement ?
+                                            <button className="full-button centre-centre" onClick={() => {}}>
+                                                <LoaderSpinner />
+                                                <p className="inline-block">&nbsp;Connection en cours</p>
+                                            </button> :
+                                            <button className="full-button" onClick={connexion_api}>Me connecter</button>
+                                        }
                                     </div>
                                 </form>
                             </div>
                         </div>
                         <div>
                             <p className="inline-block">Vous ne possédez pas encore de compte ?&nbsp;</p>
-                            <Link className="inline-block" to='/inscription'>inscrivez-vous</Link>
+                            <Link className="inline-block lien" to='/inscription'>inscrivez-vous</Link>
                         </div>
                     </div>
                 </div>

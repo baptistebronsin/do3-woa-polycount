@@ -5,7 +5,7 @@ function TextInput({ label, ...props }: any) {
 
     return (
         <div className="input-container">
-            <input id={id} {...props} spellcheck="false" />
+            <input id={id} {...props} spellCheck="false" />
             <label htmlFor={id}>{label}</label>
         </div>
     );

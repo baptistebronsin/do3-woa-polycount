@@ -23,20 +23,18 @@ export class Utilisateur {
         this.stripe_customer_id = stripe_customer_id;
     }
 
-    public static from_JSON (json: string): Utilisateur {
-        const json_object: any = JSON.parse(json);
-        
+    public static from_JSON (json: any): Utilisateur {
         return new Utilisateur(
-            json_object['pk_utilisateur_id'],
-            json_object['nom'],
-            json_object['prenom'],
-            json_object['genre'],
-            json_object['email'],
-            json_object['mot_de_passe'],
-            new Date(json_object['cree_le']),
-            json_object['valide_le'] ? new Date(json_object['valide_le']) : null,
-            json_object['desactive_le'] ? new Date(json_object['desactive_le']) : null,
-            json_object['stripe_customer_id']
+            json['pk_utilisateur_id'],
+            json['nom'],
+            json['prenom'],
+            json['genre'],
+            json['email'],
+            json['mot_de_passe'],
+            new Date(json['cree_le']),
+            json['valide_le'] ? new Date(json['valide_le']) : null,
+            json['desactive_le'] ? new Date(json['desactive_le']) : null,
+            json['stripe_customer_id']
         );
     }
 }
