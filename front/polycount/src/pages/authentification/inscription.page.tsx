@@ -1,9 +1,12 @@
-import { MouseEventHandler, useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import TextInput from "../../components/text_input.component";
 import Selecteur from "../../components/selecteur.component";
-import { Link } from "react-router-dom";
-import { AxiosResponse } from "axios";
+import { Link, NavigateFunction, useNavigate } from "react-router-dom";
+import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
+import LoaderSpinner from "../../components/loader_spinner.component";
+import { AuthContextType, useAuth } from "../../providers/authentification.provider";
+import { Utilisateur } from "../../models/utilisateur.model";
 import { toast } from "sonner";
 
 function Inscription() {
@@ -23,6 +26,11 @@ function Inscription() {
     const [erreur_page1, set_erreur_page1] = useState<string | null>(null);
     const [erreur_page2, set_erreur_page2] = useState<string | null>(null);
 
+    const [chargement, set_chargement] = useState<boolean>(false);
+
+    const navigate: NavigateFunction = useNavigate();
+    const authentification: AuthContextType | null = useAuth();
+
     useEffect(() => {
         set_erreur_page1(null);
     }, [nom, prenom]);
@@ -31,7 +39,7 @@ function Inscription() {
         set_erreur_page2(null);
     }, [email, mot_de_passe1, mot_de_passe2]);
 
-    const verifie_premiere_page_correcte = (e: any) => {
+    const verifie_premiere_page_correcte = (e: SyntheticEvent) => {
         e.preventDefault();
 
         if (nom === "" || prenom === "") {
@@ -56,7 +64,7 @@ function Inscription() {
         return null;
     }
 
-    const inscription_api = async (e: any) => {
+    const inscription_api = async (e: SyntheticEvent) => {
         e.preventDefault();
 
         if (email === "" || mot_de_passe1 === "" || mot_de_passe2 === "") {
@@ -90,10 +98,26 @@ function Inscription() {
             mot_de_passe: mot_de_passe1
         };
 
-        const reponse: AxiosResponse | null = await requete_api('POST', "/utilisateur/inscription", api_body);
+        set_chargement(true);
 
-        if (reponse)
-            toast.success("Votre compte a bien été créé !");
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", api_body);
+
+        set_chargement(false);
+
+        if (reponse && 'data' in reponse) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('utilisateur');
+            
+            localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+            if (!authentification) {
+                toast.error("Une erreur est survenue lors de l'utilisateur du provider.");
+                return null;
+            }
+
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data) });
+
+            navigate('/verification-compte', { state: { email: email, mot_de_passe: mot_de_passe1, depuis: 'INSCRIPTION' } });
+        }
     }
 
     return (
@@ -151,7 +175,14 @@ function Inscription() {
                                         <></>
                                     }
                                     <div className="centre">
-                                        <button className="full-button" onClick={inscription_api}>M'inscrire</button>
+                                        {
+                                            chargement ?
+                                            <button className="full-button centre-centre" onClick={() => {}}>
+                                                <LoaderSpinner />
+                                                <p className="inline-block">&nbsp;Inscription en cours</p>
+                                            </button> :
+                                            <button className="full-button" onClick={inscription_api}>M'inscrire</button>
+                                        }
                                     </div>
                                 </form>
                             }

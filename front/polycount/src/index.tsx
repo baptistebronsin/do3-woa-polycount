@@ -9,9 +9,12 @@ import Inscription from './pages/authentification/inscription.page';
 import Connexion from './pages/authentification/connexion.page';
 import { Toaster } from 'sonner';
 import IndexMotDePasseOublie from './pages/authentification/mot_de_passe_oublie/index.page';
+import Verification from './pages/authentification/verification.page';
+import { AuthProvider } from './providers/authentification.provider';
+import Accueil from './pages/home/accueil.page';
 
 ReactDOM.render(
-  <>
+  <AuthProvider>
     <React.StrictMode>
       <Router>
         <Routes>
@@ -19,10 +22,12 @@ ReactDOM.render(
           <Route path='/inscription' element={ <Inscription /> } />
           <Route path='/connexion' element={ <Connexion /> } />
           <Route path='/mot-de-passe-oublie' element={ <IndexMotDePasseOublie /> } />
+          <Route path='/verification-compte' element={ <Verification /> } />
+          <Route path='/accueil' element={ <Accueil /> } />
         </Routes>
       </Router>
     </React.StrictMode>
     <Toaster position="bottom-right" visibleToasts={5} expand={false} closeButton={true} toastOptions={{duration: 10000}} richColors/>
-  </>,
+  </AuthProvider>,
   document.getElementById('root')
 );

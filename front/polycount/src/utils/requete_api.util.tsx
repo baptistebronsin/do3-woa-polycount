@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "sonner";
 
-const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body: any): Promise<AxiosResponse | null> => {
+const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body: any, afficher_erreur: boolean = true): Promise<AxiosResponse | AxiosError | null> => {
     const api_url: string = "http://localhost:8080";
 
     try {
@@ -32,6 +32,9 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
         return reponse;
     } catch (erreur) {
         if (erreur instanceof AxiosError) {
+            if (!afficher_erreur)
+                return erreur;
+
             if (erreur.code == "ERR_NETWORK") {
                 toast.error("Impossible de se connecter au serveur.");
             } else if (erreur.response && erreur.response.data) {

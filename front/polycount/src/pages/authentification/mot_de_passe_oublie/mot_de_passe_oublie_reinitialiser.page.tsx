@@ -1,10 +1,11 @@
-import { AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { Link, useNavigate as UseNavigate } from "react-router-dom";
 import requete_api from "../../../utils/requete_api.util";
-import { useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import { Token } from "../../../models/token.model";
 import TextInput from "../../../components/text_input.component";
 import { toast } from "sonner";
+import LoaderSpinner from "../../../components/loader_spinner.component";
 
 function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token: string }) {
     const [token_api, set_token_api] = useState<Token | null>(null);
@@ -21,6 +22,8 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
 
     const [mot_de_passe_modifie, set_mot_de_passe_modifie] = useState<boolean>(false);
 
+    const [chargement, set_chargement] = useState<boolean>(false);
+
     const navigate = UseNavigate();
 
     const verifier_token = async () => {
@@ -29,16 +32,16 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
             token: token
         };
 
-        const reponse: AxiosResponse | null = await requete_api('POST', "/utilisateur/verifier_mot_de_passe_token", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/verifier_mot_de_passe_token", api_body);
 
-        if (!reponse) {
+        if (!reponse || !('data' in reponse)) {
             navigate("/connexion");
         } else {
             set_token_api(Token.from_JSON(reponse.data.data));
         }
     }
 
-    const changer_mot_de_passe_api = async (e: any) => {
+    const changer_mot_de_passe_api = async (e: SyntheticEvent) => {
         e.preventDefault();
 
         if (!min_10_carac || !min_1_carac_spe || !min_1_carac_maj || !min_1_chiffre) {
@@ -57,10 +60,16 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
             mot_de_passe: mot_de_passe1
         };
 
-        const reponse: AxiosResponse | null = await requete_api('PUT', "/utilisateur/modifier_mot_de_passe_oublie", api_body);
+        set_chargement(true);
 
-        if (reponse)
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_mot_de_passe_oublie", api_body);
+
+        set_chargement(false);
+
+        if (reponse && 'data' in reponse) {
             set_mot_de_passe_modifie(true);
+            toast.success(reponse.data.message);
+        }
     }
 
     useEffect(() => {
@@ -114,7 +123,14 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
                                             <div style={{ height: '30px' }}></div>
                                         }
                                         <div className="centre">
+                                        {
+                                            chargement ?
+                                            <button className="full-button centre-centre" onClick={() => {}}>
+                                                <LoaderSpinner />
+                                                <p className="inline-block">&nbsp;Réinitialisation en cours</p>
+                                            </button> :
                                             <button className="full-button" onClick={changer_mot_de_passe_api}>Réinitialiser le mot de passe</button>
+                                        }
                                         </div>
                                     </form>
                                     <div>

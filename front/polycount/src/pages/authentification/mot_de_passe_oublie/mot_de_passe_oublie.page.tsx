@@ -1,20 +1,23 @@
 import { Link } from "react-router-dom";
 import TextInput from "../../../components/text_input.component";
-import { useEffect, useState } from "react";
-import { AxiosResponse } from "axios";
+import { SyntheticEvent, useEffect, useState } from "react";
+import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../../utils/requete_api.util";
 import MotDePasseOublieEnvoye from "./mot_de_passe_oublie_envoye.page";
+import LoaderSpinner from "../../../components/loader_spinner.component";
 
 function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: Function }) {
     const [email, set_email] = useState<string>("");
 
     const [erreur_page, set_erreur_page] = useState<string | null>(null);
 
+    const [chargement, set_chargement] = useState<boolean>(false);
+
     useEffect(() => {
         set_erreur_page(null);
     }, [email]);
 
-    const mot_de_passe_oublie_api = async (e: any) => {
+    const mot_de_passe_oublie_api = async (e: SyntheticEvent) => {
         e.preventDefault();
 
         if (email === "") {
@@ -33,7 +36,11 @@ function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: F
             email: email
         };
 
-        const reponse: AxiosResponse | null = await requete_api('PUT', "/utilisateur/mot_de_passe_oublie", api_body);
+        set_chargement(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/mot_de_passe_oublie", api_body);
+
+        set_chargement(false);
 
         if (reponse) {
             set_operation_reussie(true);
@@ -64,8 +71,16 @@ function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: F
                             </> :
                             <div style={{ height: '30px' }}></div>
                         }
+                        
                         <div className="centre">
-                            <button className="full-button" onClick={mot_de_passe_oublie_api} >Réinitialiser</button>
+                            {
+                                chargement ?
+                                <button className="full-button centre-centre" onClick={() => {}}>
+                                    <LoaderSpinner />
+                                    <p className="inline-block">&nbsp;Réinitialisation en cours</p>
+                                </button> :
+                                <button className="full-button" onClick={mot_de_passe_oublie_api} >Réinitialiser</button>
+                            }
                         </div>
                     </form>
                 </div>

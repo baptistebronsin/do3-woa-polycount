@@ -69,3 +69,11 @@
     border-radius: 10px;
     color: white;
 }
+
+.light-button {
+    border: 1px solid #4B7BB4;
+    color: #4B7BB4;
+    padding: 10px 28px;
+    border-radius: 10px;
+    background-color: white;
+}

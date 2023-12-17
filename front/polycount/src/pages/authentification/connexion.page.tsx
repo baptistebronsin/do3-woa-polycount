@@ -1,10 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, NavigateFunction, useNavigate } from "react-router-dom";
 import TextInput from "../../components/text_input.component";
-import { useEffect, useState } from "react";
-import { AxiosResponse } from "axios";
-import { toast } from "sonner";
+import { SyntheticEvent, useEffect, useState } from "react";
+import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
 import LoaderSpinner from "../../components/loader_spinner.component";
+import { toast } from "sonner";
+import { AuthContextType, useAuth } from "../../providers/authentification.provider";
+import { Utilisateur } from "../../models/utilisateur.model";
 
 function Connexion() {
     const [email, set_email] = useState<string>("");
@@ -14,11 +16,14 @@ function Connexion() {
 
     const [chargement, set_chargement] = useState<boolean>(false);
 
+    const navigate: NavigateFunction = useNavigate();
+    const authentification: AuthContextType | null = useAuth();
+
     useEffect(() => {
         set_erreur_page(null);
     }, [email, mot_de_passe]);
 
-    const connexion_api = async (e: any) => {
+    const connexion_api = async (e: SyntheticEvent) => {
         e.preventDefault();
 
         if (email === "" || mot_de_passe === "") {
@@ -40,11 +45,32 @@ function Connexion() {
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | null = await requete_api('POST', "/utilisateur/connexion", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body);
 
         set_chargement(false);
-        if (reponse) {
-            toast.success("Votre connexion a bien fonctionné.");
+
+        if (reponse && 'data' in reponse) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('utilisateur');
+
+            localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+
+            if (!authentification) {
+                toast.error("Une erreur est survenue lors de l'utilisateur du provider.");
+                return null;
+            }
+
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data) });
+
+            if (reponse.data.token) {
+                localStorage.setItem('token', reponse.data.token);
+
+                if (localStorage.getItem('utilisateur') && localStorage.getItem('token'))
+                    navigate('/accueil');
+                else
+                    toast.error("Une erreur est survenue lors de l'enregistrement des données de sessions.");
+            } else 
+                navigate('/verification-compte', { state: { email: email, mot_de_passe: mot_de_passe, depuis: 'CONNEXION' } });
         }
     }
 
