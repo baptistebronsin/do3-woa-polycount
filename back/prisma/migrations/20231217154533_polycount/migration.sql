@@ -30,8 +30,9 @@ CREATE TABLE "Groupe" (
 -- CreateTable
 CREATE TABLE "Participant_Groupe" (
     "pk_participant_groupe_id" SERIAL NOT NULL,
-    "fk_utilisateur_id" INTEGER NOT NULL,
+    "fk_utilisateur_id" INTEGER,
     "fk_groupe_id" INTEGER NOT NULL,
+    "nom" VARCHAR(30),
     "peut_creer_depense" BOOLEAN NOT NULL,
     "peut_modifier_depense" BOOLEAN NOT NULL,
     "peut_supprimer_depense" BOOLEAN NOT NULL,
@@ -214,7 +215,7 @@ CREATE INDEX "_TagDepense_B_index" ON "_TagDepense"("B");
 ALTER TABLE "Groupe" ADD CONSTRAINT "Groupe_fk_utilisateur_createur_id_fkey" FOREIGN KEY ("fk_utilisateur_createur_id") REFERENCES "Utilisateur"("pk_utilisateur_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Participant_Groupe" ADD CONSTRAINT "Participant_Groupe_fk_utilisateur_id_fkey" FOREIGN KEY ("fk_utilisateur_id") REFERENCES "Utilisateur"("pk_utilisateur_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Participant_Groupe" ADD CONSTRAINT "Participant_Groupe_fk_utilisateur_id_fkey" FOREIGN KEY ("fk_utilisateur_id") REFERENCES "Utilisateur"("pk_utilisateur_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Participant_Groupe" ADD CONSTRAINT "Participant_Groupe_fk_groupe_id_fkey" FOREIGN KEY ("fk_groupe_id") REFERENCES "Groupe"("pk_groupe_id") ON DELETE RESTRICT ON UPDATE CASCADE;

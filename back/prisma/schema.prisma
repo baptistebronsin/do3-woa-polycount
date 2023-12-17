@@ -50,9 +50,10 @@ model Groupe {
 }
 
 model Participant_Groupe {
-  pk_participant_groupe_id          Int         @id @default(autoincrement())
-  fk_utilisateur_id                 Int
+  pk_participant_groupe_id          Int          @id @default(autoincrement())
+  fk_utilisateur_id                 Int?
   fk_groupe_id                      Int
+  nom                               String?      @db.VarChar(30)
   peut_creer_depense                Boolean
   peut_modifier_depense             Boolean
   peut_supprimer_depense            Boolean
@@ -62,8 +63,8 @@ model Participant_Groupe {
   rejoint_le                        DateTime?
   quitte_le                         DateTime?
 
-  utilisateur_participant           Utilisateur @relation("ParticipantGroupe", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
-  groupe                            Groupe      @relation("Participants", fields: [fk_groupe_id], references: [pk_groupe_id])
+  utilisateur_participant           Utilisateur? @relation("ParticipantGroupe", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
+  groupe                            Groupe       @relation("Participants", fields: [fk_groupe_id], references: [pk_groupe_id])
 
   @@map("Participant_Groupe")
 }
