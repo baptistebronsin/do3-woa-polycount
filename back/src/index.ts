@@ -6,9 +6,7 @@ import dotenv from "dotenv";
 import logger from './middlewares/logger.middleware';
 dotenv.config();
 
-import { PrismaClient } from '@prisma/client'
 import helmet from 'helmet';
-const prisma: PrismaClient = new PrismaClient()
 
 const app = express();
 
@@ -17,6 +15,13 @@ app.use(helmet());
 app.use(express.urlencoded({extended: false}));
 app.use(logger);
 app.use(express.json());
+
+app.use((req, res, next) => {
+    setTimeout(() => {
+        next();
+    }, 2000);
+});
+
 app.use(routes);
 
 app.get('/', (req: Request, res: Response) => {

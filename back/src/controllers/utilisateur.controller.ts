@@ -17,6 +17,8 @@ import { genre_utilisateur } from "../functions/genre.function";
 import { temps_validation } from "../utils/token.utils";
 import stripe from '../utils/stripe.utils';
 import Stripe from "stripe";
+import { ISuspension } from "../models/suspension.model";
+import { IUtilisateur } from "../models/utilisateur.model";
 
 dotenv.config();
 
@@ -115,15 +117,18 @@ export const creation_compte: RequestHandler = async (req: Request, res: Respons
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
             message: "Une erreur serveur est survenue de l'envoi du mail de bienvenue."
         });
+
+    const utilisateur_minimalise: IUtilisateur = {
+        pk_utilisateur_id: utilisateur_cree.pk_utilisateur_id,
+        nom: utilisateur_cree.nom,
+        prenom: utilisateur_cree.prenom,
+        genre: utilisateur_cree.genre,
+        email: utilisateur_cree.email
+    };
     
     return res.status(http_response_util.statuts.succes.cree).json({
         message: "Votre comtpe a bien été créé.",
-        data: {
-            ...utilisateur_cree,
-            cree_le: moment(utilisateur_cree.cree_le).format(moment_date_time_format),
-            valide_le: utilisateur_cree.valide_le ? moment(utilisateur_cree.valide_le).format(moment_date_time_format) : null,
-            desactive_le: utilisateur_cree.desactive_le ? moment(utilisateur_cree.desactive_le).format(moment_date_time_format) : null
-        }
+        data: utilisateur_minimalise
     });
 }
 
@@ -175,10 +180,12 @@ export const connexion: RequestHandler = async (req: Request, res: Response) => 
         try {
             const suspension_utilisateur: Suspension | null = await utilisateur_service.recuperer_suspension(utilisateur_existant.pk_utilisateur_id, new Date());
 
+            const suspension_minimalise: ISuspension | null = suspension_utilisateur;
+
             if (suspension_utilisateur)
                 return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
                     message: "Votre compte a été suspendu.",
-                    data: suspension_utilisateur
+                    data: suspension_minimalise
                 });
         } catch (error: PrismaClientKnownRequestError | any) {
             return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
@@ -187,27 +194,25 @@ export const connexion: RequestHandler = async (req: Request, res: Response) => 
             });
         }
 
+        const utilisateur_minimalise: IUtilisateur = {
+            pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
+            nom: utilisateur_existant.nom,
+            prenom: utilisateur_existant.prenom,
+            genre: utilisateur_existant.genre,
+            email: utilisateur_existant.email
+        };
+
         // Si le compte a été vérifie, alors on génère un token de connexion
         if (utilisateur_existant.valide_le)
             return res.status(http_response_util.statuts.succes.ok).json({
                 message: "Connexion réussie.",
-                data: {
-                    ...utilisateur_existant,
-                    cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-                    valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-                    desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-                },
+                data: utilisateur_minimalise,
                 token: genere_token(utilisateur_existant.pk_utilisateur_id)
             });
         else
             return res.status(http_response_util.statuts.succes.ok).json({
                 message: "Connexion réussie. Veuillez faire vérifier votre compte.",
-                data: {
-                    ...utilisateur_existant,
-                    cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-                    valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-                    desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-                },
+                data: utilisateur_minimalise,
                 token: null
             });
 
@@ -291,6 +296,88 @@ export const verification_compte: RequestHandler = async (req: Request, res: Res
 
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre compte a bien été vérifié."
+    });
+}
+
+export const renouveller_verification_compte: RequestHandler = async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const type_token: string = "Pol01";
+
+    if (!email)
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: ["email"]
+        });
+
+    const email_formate: string = email.toLocaleString();
+
+    // Si l'email n'est pas valide
+    if (!email_valide(email_formate))
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Veuillez saisir une adresse email valide."
+        });
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche un utilisateur dans la bdd avec l'email
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_email(email_formate);
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun utilisateur n'a été trouvé."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des informations de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    // Si l'utilisateur a déjà validé son compte
+    if (utilisateur_existant.valide_le)
+        return res.status(http_response_util.statuts.succes.ok).json({
+            message: "Votre compte a déjà été validé."
+        });
+
+    // try {
+    //     const utilisateur_tokens: Token[] = await utilisateur_service.recuperer_tous_tokens(utilisateur_existant.pk_utilisateur_id);
+
+    //     const token_actif: Token | undefined = utilisateur_tokens.find((token: Token) => token.type_verification == type_token && token.date_creation <= new Date() && token.date_desactivation >= new Date());
+
+    //     if (token_actif)
+    //         return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+    //             message: "Un mail vous a déjà été envoyé, veuillez regarder dans votre boîte avant d'en regénérer un nouveau."
+    //         });
+    // } catch (error: PrismaClientKnownRequestError | any) {
+    //     return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+    //         message: "Une erreur serveur est survenue lors de récupération de tous les tokens.",
+    //         erreur: error
+    //     });
+    // }
+
+    const token: string = crypto.randomBytes(100).toString('hex');
+
+    try {
+        await utilisateur_service.ajouter_token(utilisateur_existant.pk_utilisateur_id, token, type_token, temps_validation[type_token]);
+    } catch (error) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la création du token. Mais l'utilisateur a bien été créé.",
+            erreur: error
+        });
+    }
+
+    const mail = mail_utils.contenu.mail_verification_compte;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/verification_compte?email=" + utilisateur_existant.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const etat_mail: boolean = await envoyer_mail(email_formate, mail.entete, contenu_mail);
+
+    if (!etat_mail)
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue de l'envoi du mail de bienvenue."
+        });
+
+    return res.status(http_response_util.statuts.succes.ok).json({
+        message: "Un mail de vérification vous a été envoyé."
     });
 }
 
@@ -388,15 +475,17 @@ export const modification_email_non_verifie: RequestHandler = async (req: Reques
         });
     }
 
+    const utilisateur_minimalise: IUtilisateur = {
+        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
+        nom: utilisateur_existant.nom,
+        prenom: utilisateur_existant.prenom,
+        genre: utilisateur_existant.genre,
+        email: utilisateur_existant.email
+    };
+
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "La modification de l'adresse email a bien été prise en compte.",
-        data: {
-            ...utilisateur_existant,
-            email: email_formate,
-            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-            valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-            desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-        }
+        data: utilisateur_minimalise
     });
 }
 
@@ -728,13 +817,9 @@ export const modification_informations: RequestHandler = async (req: Request, re
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Les données ont bien été mises à jour.",
         data: {
-            ...utilisateur_existant,
             nom: nom_formate,
             prenom: prenom_formate,
-            genre: genre_formate,
-            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-            valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-            desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
+            genre: genre_formate
         }
     });
 }
@@ -844,15 +929,17 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
             message: "Une erreur serveur est survenue de l'envoi du mail de bienvenue."
         });
 
+    const utilisateur_minimalise: IUtilisateur = {
+        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
+        nom: utilisateur_existant.nom,
+        prenom: utilisateur_existant.prenom,
+        genre: utilisateur_existant.genre,
+        email: utilisateur_existant.email
+    };
+
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre adresse email a bien été mise à jour.",
-        data: {
-            ...utilisateur_existant,
-            email: email_formate,
-            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-            valide_le: null,
-            desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-        }
+        data: utilisateur_minimalise
     });
 }
 
@@ -910,15 +997,17 @@ export const modification_mot_de_passe: RequestHandler = async (req: Request, re
             message: "Une erreur serveur est survenue de l'envoi du mail de bienvenue."
         });
 
+    const utilisateur_minimalise: IUtilisateur = {
+        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
+        nom: utilisateur_existant.nom,
+        prenom: utilisateur_existant.prenom,
+        genre: utilisateur_existant.genre,
+        email: utilisateur_existant.email
+    };
+
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre mot de passe a bien été mise à jour.",
-        data: {
-            ...utilisateur_existant,
-            mot_de_passe: mot_de_passe_crypte,
-            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-            valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-            desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null
-        }
+        data: utilisateur_minimalise
     });
 }
 
@@ -976,14 +1065,17 @@ export const desactivation: RequestHandler = async (req: Request, res: Response)
             message: "Une erreur serveur est survenue de l'envoi du mail de désactivation."
         });
 
+    const utilisateur_minimalise: IUtilisateur = {
+        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
+        nom: utilisateur_existant.nom,
+        prenom: utilisateur_existant.prenom,
+        genre: utilisateur_existant.genre,
+        email: utilisateur_existant.email
+    };
+
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre comtpe a bien été désactivé.",
-        data: {
-            ...utilisateur_existant,
-            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-            valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-            desactive_le: moment(maintenant).format(moment_date_time_format)
-        }
+        data: utilisateur_minimalise
     });
 }
 
@@ -1036,13 +1128,16 @@ export const reactivation: RequestHandler = async (req: Request, res: Response) 
             message: "Une erreur serveur est survenue de l'envoi du mail de réactivation."
         });
 
+    const utilisateur_minimalise: IUtilisateur = {
+        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
+        nom: utilisateur_existant.nom,
+        prenom: utilisateur_existant.prenom,
+        genre: utilisateur_existant.genre,
+        email: utilisateur_existant.email
+    };
+
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre comtpe a bien été réactivé.",
-        data: {
-            ...utilisateur_existant,
-            cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
-            valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
-            desactive_le: null
-        }
+        data: utilisateur_minimalise
     });
 }

@@ -7,6 +7,7 @@ const utilisateur_router = Router();
 utilisateur_router.post('/inscription', utilisateur_controller.creation_compte);
 utilisateur_router.post('/connexion', utilisateur_controller.connexion);
 utilisateur_router.get('/verification_compte', utilisateur_controller.verification_compte);
+utilisateur_router.put('/verification_compte/renouveller', utilisateur_controller.renouveller_verification_compte);
 utilisateur_router.put('/modifier_email_non_verifie', utilisateur_controller.modification_email_non_verifie);
 utilisateur_router.put('/mot_de_passe_oublie', utilisateur_controller.mot_de_passe_oublie);
 utilisateur_router.post('/verifier_mot_de_passe_token', utilisateur_controller.verifier_mot_de_passe_token_valide);

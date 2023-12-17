@@ -5,7 +5,7 @@ import stripe_router from "./stripe.route";
 
 const routes: Router = Router();
 
-routes.use('/utilisateur', utilisateur_router)
+routes.use('/utilisateur', utilisateur_router);
 routes.use('/abonnement', abonnement_router);
 routes.use('/stripe', stripe_router);
 
