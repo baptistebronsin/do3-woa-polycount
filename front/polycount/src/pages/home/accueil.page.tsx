@@ -4,13 +4,7 @@ import { NavigateFunction, useNavigate } from "react-router-dom";
 
 function Accueil() {
     const authentification: AuthContextType | null = useAuth();
-
     const navigate: NavigateFunction = useNavigate();
-
-    useEffect(() => {
-        if (!authentification || !authentification.authentification.token)
-            navigate('/connexion');
-    }, []);
 
     const deconnexion = async (e: SyntheticEvent) => {
         e.preventDefault();

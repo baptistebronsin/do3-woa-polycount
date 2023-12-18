@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import './assets/css/main.css';
 import './assets/css/text_input.css';
 import './assets/css/selecteur.css';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, NavigateFunction, useNavigate } from 'react-router-dom';
 import Inscription from './pages/authentification/inscription.page';
 import Connexion from './pages/authentification/connexion.page';
 import { Toaster } from 'sonner';
@@ -12,6 +12,7 @@ import IndexMotDePasseOublie from './pages/authentification/mot_de_passe_oublie/
 import Verification from './pages/authentification/verification.page';
 import { AuthProvider } from './providers/authentification.provider';
 import Accueil from './pages/home/accueil.page';
+import ProtectedRoute from './routes/protected.route';
 
 ReactDOM.render(
   <AuthProvider>
@@ -23,7 +24,7 @@ ReactDOM.render(
           <Route path='/connexion' element={ <Connexion /> } />
           <Route path='/mot-de-passe-oublie' element={ <IndexMotDePasseOublie /> } />
           <Route path='/verification-compte' element={ <Verification /> } />
-          <Route path='/accueil' element={ <Accueil /> } />
+          <Route path='/accueil' element={ <ProtectedRoute><Accueil /></ProtectedRoute> } />
         </Routes>
       </Router>
     </React.StrictMode>
