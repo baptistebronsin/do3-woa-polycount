@@ -62,7 +62,7 @@ function Verification () {
                 localStorage.setItem('token', reponse.data.token);
 
                 if (localStorage.getItem('utilisateur') && localStorage.getItem('token'))
-                    navigate('/accueil');
+                    navigate('/home/groupes');
                 else
                     toast.error("Une erreur est survenue lors de l'enregistrement des données de sessions.");
             }

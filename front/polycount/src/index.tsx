@@ -1,18 +1,18 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import './assets/css/main.css';
 import './assets/css/text_input.css';
 import './assets/css/selecteur.css';
-import { BrowserRouter as Router, Route, Routes, NavigateFunction, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Inscription from './pages/authentification/inscription.page';
 import Connexion from './pages/authentification/connexion.page';
 import { Toaster } from 'sonner';
 import IndexMotDePasseOublie from './pages/authentification/mot_de_passe_oublie/index.page';
 import Verification from './pages/authentification/verification.page';
 import { AuthProvider } from './providers/authentification.provider';
-import Accueil from './pages/home/accueil.page';
 import ProtectedRoute from './routes/protected.route';
+import HomeRoute from './routes/home.route';
 
 ReactDOM.render(
   <AuthProvider>
@@ -24,7 +24,8 @@ ReactDOM.render(
           <Route path='/connexion' element={ <Connexion /> } />
           <Route path='/mot-de-passe-oublie' element={ <IndexMotDePasseOublie /> } />
           <Route path='/verification-compte' element={ <Verification /> } />
-          <Route path='/accueil' element={ <ProtectedRoute><Accueil /></ProtectedRoute> } />
+          
+          <Route path='/home/*' element={ <ProtectedRoute><HomeRoute /></ProtectedRoute> } />
         </Routes>
       </Router>
     </React.StrictMode>
