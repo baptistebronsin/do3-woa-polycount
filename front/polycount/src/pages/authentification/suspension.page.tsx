@@ -12,7 +12,8 @@ function SuspensionPage () {
     const authentification: AuthContextType | null = useAuth();
 
     useEffect(() => {
-        navigate('/connexion');
+        if (!suspension)
+            navigate('/connexion');
     }, [suspension]);
 
     const options: Intl.DateTimeFormatOptions = {
