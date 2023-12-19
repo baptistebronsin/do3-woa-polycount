@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse } from "axios";
-import { Link, useNavigate as UseNavigate } from "react-router-dom";
+import { Link, NavigateFunction, useNavigate } from "react-router-dom";
 import requete_api from "../../../utils/requete_api.util";
 import { SyntheticEvent, useEffect, useState } from "react";
 import { Token } from "../../../models/token.model";
@@ -24,7 +24,7 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
 
     const [chargement, set_chargement] = useState<boolean>(false);
 
-    const navigate = UseNavigate();
+    const navigate: NavigateFunction = useNavigate();
 
     const verifier_token = async () => {
         const api_body: any = {
@@ -32,7 +32,7 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
             token: token
         };
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/verifier_mot_de_passe_token", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/verifier_mot_de_passe_token", api_body, navigate, true);
 
         if (!reponse || !('data' in reponse)) {
             navigate("/connexion");
@@ -62,7 +62,7 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_mot_de_passe_oublie", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_mot_de_passe_oublie", api_body, navigate, true);
 
         set_chargement(false);
 

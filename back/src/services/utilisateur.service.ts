@@ -122,9 +122,21 @@ export const recuperer_suspension = async (utilisateur_id: number, date: Date): 
             date_debut: {
                 lte: date
             },
-            date_fin: {
-                gte: date
-            }
+            AND: [
+                {
+                    OR: [
+                        {
+                            date_fin: null
+                        },
+                        {
+                            date_fin: {
+                                gte: date
+                            }
+                        }
+                    ]
+                }
+            ],
+            fk_utilisateur_id: utilisateur_id
         },
         orderBy: {
             date_ajout: 'desc'

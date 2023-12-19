@@ -45,7 +45,7 @@ function Connexion() {
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, navigate, true);
 
         set_chargement(false);
 

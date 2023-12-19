@@ -100,7 +100,7 @@ function Inscription() {
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", navigate, api_body);
 
         set_chargement(false);
 

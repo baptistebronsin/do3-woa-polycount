@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, NavigateFunction, useNavigate } from "react-router-dom";
 import TextInput from "../../../components/text_input.component";
 import { SyntheticEvent, useEffect, useState } from "react";
 import { AxiosError, AxiosResponse } from "axios";
@@ -12,6 +12,8 @@ function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: F
     const [erreur_page, set_erreur_page] = useState<string | null>(null);
 
     const [chargement, set_chargement] = useState<boolean>(false);
+
+    const navigate: NavigateFunction = useNavigate();
 
     useEffect(() => {
         set_erreur_page(null);
@@ -38,7 +40,7 @@ function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: F
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/mot_de_passe_oublie", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/mot_de_passe_oublie", api_body, navigate, true);
 
         set_chargement(false);
 

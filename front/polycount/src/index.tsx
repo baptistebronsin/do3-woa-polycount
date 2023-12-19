@@ -13,6 +13,7 @@ import Verification from './pages/authentification/verification.page';
 import { AuthProvider } from './providers/authentification.provider';
 import ProtectedRoute from './routes/protected.route';
 import HomeRoute from './routes/home.route';
+import SuspensionPage from './pages/authentification/suspension.page';
 
 ReactDOM.render(
   <AuthProvider>
@@ -24,6 +25,7 @@ ReactDOM.render(
           <Route path='/connexion' element={ <Connexion /> } />
           <Route path='/mot-de-passe-oublie' element={ <IndexMotDePasseOublie /> } />
           <Route path='/verification-compte' element={ <Verification /> } />
+          <Route path='/suspension' element={ <SuspensionPage /> } />
           
           <Route path='/home/*' element={ <ProtectedRoute><HomeRoute /></ProtectedRoute> } />
         </Routes>

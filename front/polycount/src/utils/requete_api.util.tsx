@@ -1,7 +1,9 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
+import { NavigateFunction, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Suspension } from "../models/suspension.model";
 
-const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body: any, afficher_erreur: boolean = true): Promise<AxiosResponse | AxiosError | null> => {
+const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body: any, navigate: NavigateFunction, afficher_erreur: boolean = true): Promise<AxiosResponse | AxiosError | null> => {
     const api_url: string = "http://localhost:8080";
 
     try {
@@ -45,6 +47,9 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
                         } else {
                             toast.error("Une erreur serveur est survenue.");
                         }
+                    } else if (erreur.response.status == 403 && erreur.response.data.message == "Votre compte a été suspendu.") {
+                        navigate('/suspension', { state: { suspension: Suspension.from_JSON(erreur.response.data.data) } });
+                        return null;
                     } else {
                         if ('message' in erreur.response.data) {
                             toast.warning(erreur.response.data.message);

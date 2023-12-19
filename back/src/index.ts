@@ -1,3 +1,5 @@
+process.env.TZ = 'Europe/Paris';
+
 import express, { Request, Response } from 'express';
 import routes from './routes';
 const cors = require('cors');

@@ -180,13 +180,19 @@ export const connexion: RequestHandler = async (req: Request, res: Response) => 
         try {
             const suspension_utilisateur: Suspension | null = await utilisateur_service.recuperer_suspension(utilisateur_existant.pk_utilisateur_id, new Date());
 
-            const suspension_minimalise: ISuspension | null = suspension_utilisateur;
+            if (suspension_utilisateur) {
+                const suspension_minimalise: ISuspension = {
+                    pk_suspension_id: suspension_utilisateur.pk_suspension_id,
+                    message_utilisateur: suspension_utilisateur.message_utilisateur,
+                    date_debut: suspension_utilisateur.date_debut,
+                    date_fin: suspension_utilisateur.date_fin
+                };
 
-            if (suspension_utilisateur)
                 return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
                     message: "Votre compte a été suspendu.",
                     data: suspension_minimalise
                 });
+            }
         } catch (error: PrismaClientKnownRequestError | any) {
             return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
                 message: "Une erreur serveur est survenue lors de la vérification des suspensions.",

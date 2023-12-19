@@ -1,8 +1,9 @@
 import { Link, NavigateFunction, useNavigate } from "react-router-dom";
 import { AuthContextType, useAuth } from "../providers/authentification.provider";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRightFromBracket, faUser } from '@fortawesome/free-solid-svg-icons'
 import { SyntheticEvent, useState } from "react";
+import deconnexion from "../utils/deconnexion.util";
 
 function Navigation() {
     const authentification: AuthContextType | null = useAuth();
@@ -10,20 +11,25 @@ function Navigation() {
 
     const [afficher_compte, set_afficher_compte] = useState<boolean>(false);
 
-    const deconnexion = async (e: SyntheticEvent) => {
-        e.preventDefault();
-
-        localStorage.removeItem('token');
-        localStorage.removeItem('utilisateur');
-        authentification?.set_authentification({ token: null, utilisateur: null });
-
-        navigate('/connexion');
-    }
+    const options_compte: {label: string, redirection: string}[] = [
+        {
+            label: "Changer mes informations",
+            redirection: "/home/compte/informations"
+        },
+        {
+            label: "Changer mon email",
+            redirection: "/home/compte/email"
+        },
+        {
+            label: "Changer mon mot de passe",
+            redirection: "/home/compte/mot-de-passe"
+        }
+    ];
 
     return (
         <>
             <nav>
-                <img alt="Logo Polycount" src="https://polytech.baptistebronsin.be/polycount/logo_polycount.png" style={{ height: '50px', borderRadius: '6px', margin: '10px', marginBottom: '0' }}/>
+                <img onClick={() => navigate('/home/groupes')} alt="Logo Polycount" src="https://polytech.baptistebronsin.be/polycount/logo_polycount.png" style={{ height: '50px', borderRadius: '6px', margin: '10px', marginBottom: '0' }}/>
                 <div>
                     <p onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>{ authentification?.authentification.utilisateur?.prenom } { authentification?.authentification.utilisateur?.nom.toUpperCase() }&nbsp;<FontAwesomeIcon icon={faUser} style={{color: "#4b7bb4"}} /></p>
                 </div>
@@ -33,14 +39,16 @@ function Navigation() {
                 <div style={{ position: 'absolute', top: '40px', right: '10px' }} onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>
                     <div style={{ marginTop: '10px', background: 'white', padding: '10px', borderRadius: '6px' }}>
                         <p>Mon compte</p>
-                        <hr />
+                        <hr style={{ margin: '10px 0' }} />
                         <ul>
-                            <li><Link to="/home/compte">Changer mes informations</Link></li>
-                            <li><Link to="/home/compte">Changer mon mail</Link></li>
-                            <li><Link to="/home/compte">Changer mon mot de passe</Link></li>
+                            {
+                                options_compte.map((option) => (
+                                    <li><Link to={option.redirection}>{option.label}</Link></li>
+                                ))
+                            }
                         </ul>
-                        <hr />
-                        <p onClick={deconnexion}>Me déconnecter</p>
+                        <hr style={{ margin: '10px 0' }} />
+                        <p onClick={(e: SyntheticEvent) => deconnexion(e, authentification, navigate)} className="centre-centre lien">Me déconnecter&nbsp;<FontAwesomeIcon icon={faArrowRightFromBracket}/></p>
                     </div>
                 </div> : <></>
             }

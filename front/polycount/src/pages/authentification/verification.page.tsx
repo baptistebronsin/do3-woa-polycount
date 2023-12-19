@@ -43,7 +43,7 @@ function Verification () {
             mot_de_passe: mot_de_passe
         };
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, false);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, navigate, false);
 
         if (reponse && 'data' in reponse) {
             localStorage.removeItem('token');
@@ -89,7 +89,7 @@ function Verification () {
 
         set_chargement_envoi_mail(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", navigate, api_body);
         
         set_chargement_envoi_mail(false);
 
@@ -129,7 +129,7 @@ function Verification () {
 
         set_chargement_changement_email(true);
 
-        const reponse1: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_email_non_verifie", api_body1);
+        const reponse1: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_email_non_verifie", api_body1, navigate, true);
 
         if (!reponse1 || !('data' in reponse1)) {
             set_chargement_changement_email(false);
@@ -143,7 +143,7 @@ function Verification () {
             email: email_enregistre
         };
 
-        const reponse2: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", api_body2);
+        const reponse2: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", api_body2, navigate, true);
         
         set_chargement_changement_email(false);
 
