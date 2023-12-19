@@ -1,4 +1,4 @@
-import { classNames } from "../utils/class_name.util"
+import { classNames } from "../../utils/class_name.util"
 
 export interface LoaderSpinnerProps {
     className?: string

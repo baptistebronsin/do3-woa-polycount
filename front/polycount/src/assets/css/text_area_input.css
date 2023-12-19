@@ -1,0 +1,35 @@
+.text-area-container {
+    position: relative;
+}
+
+.text-area-container label {
+    position: absolute;
+    top: 0;
+    left: 10px;
+    background-color: white;
+    padding: 0 5px;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 14px;
+}
+
+.text-area-container textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 16px;
+    resize: vertical;
+}
+
+.text-area-container textarea:focus {
+    outline: none;
+}
+
+.character-counter {
+    position: absolute;
+    bottom: 10px;
+    right: 16px;
+    color: #666;
+    font-size: 12px;
+}

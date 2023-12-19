@@ -78,6 +78,10 @@
     background-color: white;
 }
 
+.light-button:hover, .full-button:hover {
+    cursor: pointer;
+}
+
 nav {
     display: flex;
     justify-content: space-between;

@@ -1,10 +1,10 @@
 import { SyntheticEvent, useEffect, useState } from "react";
-import TextInput from "../../components/text_input.component";
-import Selecteur from "../../components/selecteur.component";
+import TextInput from "../../components/input/text_input.component";
+import Selecteur from "../../components/input/selecteur.component";
 import { Link, NavigateFunction, useNavigate } from "react-router-dom";
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
-import LoaderSpinner from "../../components/loader_spinner.component";
+import LoaderSpinner from "../../components/loader/loader_spinner.component";
 import { AuthContextType, useAuth } from "../../providers/authentification.provider";
 import { Utilisateur } from "../../models/utilisateur.model";
 import { toast } from "sonner";

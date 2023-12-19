@@ -1,9 +1,9 @@
 import { Link, NavigateFunction, useNavigate } from "react-router-dom";
-import TextInput from "../../components/text_input.component";
+import TextInput from "../../components/input/text_input.component";
 import { SyntheticEvent, useEffect, useState } from "react";
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
-import LoaderSpinner from "../../components/loader_spinner.component";
+import LoaderSpinner from "../../components/loader/loader_spinner.component";
 import { toast } from "sonner";
 import { AuthContextType, useAuth } from "../../providers/authentification.provider";
 import { Utilisateur } from "../../models/utilisateur.model";
@@ -18,6 +18,11 @@ function Connexion() {
 
     const navigate: NavigateFunction = useNavigate();
     const authentification: AuthContextType | null = useAuth();
+
+    useEffect(() => {
+        if (authentification?.authentification.token)
+            navigate('/home/groupes');
+    }, [authentification?.authentification]);
 
     useEffect(() => {
         set_erreur_page(null);

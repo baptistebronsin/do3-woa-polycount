@@ -1,10 +1,10 @@
 import { Link, NavigateFunction, useNavigate } from "react-router-dom";
-import TextInput from "../../../components/text_input.component";
+import TextInput from "../../../components/input/text_input.component";
 import { SyntheticEvent, useEffect, useState } from "react";
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../../utils/requete_api.util";
 import MotDePasseOublieEnvoye from "./mot_de_passe_oublie_envoye.page";
-import LoaderSpinner from "../../../components/loader_spinner.component";
+import LoaderSpinner from "../../../components/loader/loader_spinner.component";
 
 function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: Function }) {
     const [email, set_email] = useState<string>("");

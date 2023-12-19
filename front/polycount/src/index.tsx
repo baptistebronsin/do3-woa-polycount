@@ -4,6 +4,7 @@ import './index.css';
 import './assets/css/main.css';
 import './assets/css/text_input.css';
 import './assets/css/selecteur.css';
+import './assets/css/text_area_input.css'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Inscription from './pages/authentification/inscription.page';
 import Connexion from './pages/authentification/connexion.page';

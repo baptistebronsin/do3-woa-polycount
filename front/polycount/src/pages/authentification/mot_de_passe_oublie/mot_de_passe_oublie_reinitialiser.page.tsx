@@ -3,9 +3,9 @@ import { Link, NavigateFunction, useNavigate } from "react-router-dom";
 import requete_api from "../../../utils/requete_api.util";
 import { SyntheticEvent, useEffect, useState } from "react";
 import { Token } from "../../../models/token.model";
-import TextInput from "../../../components/text_input.component";
+import TextInput from "../../../components/input/text_input.component";
 import { toast } from "sonner";
-import LoaderSpinner from "../../../components/loader_spinner.component";
+import LoaderSpinner from "../../../components/loader/loader_spinner.component";
 
 function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token: string }) {
     const [token_api, set_token_api] = useState<Token | null>(null);

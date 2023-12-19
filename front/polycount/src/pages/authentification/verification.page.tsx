@@ -1,7 +1,7 @@
 import { Link, NavigateFunction, useLocation, useNavigate } from "react-router-dom";
-import LoaderSpinner from "../../components/loader_spinner.component";
+import LoaderSpinner from "../../components/loader/loader_spinner.component";
 import { useEffect, useState } from "react";
-import TextInput from "../../components/text_input.component";
+import TextInput from "../../components/input/text_input.component";
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
 import { AuthContextType, useAuth } from "../../providers/authentification.provider";
