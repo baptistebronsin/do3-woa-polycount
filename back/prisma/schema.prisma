@@ -35,7 +35,7 @@ model Utilisateur {
 
 model Groupe {
   pk_groupe_id               Int                  @id @default(autoincrement())
-  nom                        String?              @db.VarChar(50)
+  nom                        String               @db.VarChar(50)
   description                String?              @db.VarChar(200)
   fk_utilisateur_createur_id Int
   cree_le                    DateTime             @default(now())

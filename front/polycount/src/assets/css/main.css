@@ -82,6 +82,10 @@
     cursor: pointer;
 }
 
+.hover:hover {
+    cursor: pointer;
+}
+
 nav {
     display: flex;
     justify-content: space-between;

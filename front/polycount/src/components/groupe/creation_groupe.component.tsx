@@ -1,33 +1,69 @@
-import { SyntheticEvent, useState } from "react";
+import { SyntheticEvent, useCallback, useEffect, useState } from "react";
 import TextAreaInput from "../input/text_area_input.component";
 import TextInput from "../input/text_input.component";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
-
-interface Participant {
-    id: number,
-    nom: string,
-    prenom: string
-}
+import { faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 function CreationGroupe ({ annulation }: { annulation: Function }) {
+    const [, updateState] = useState({});
+    const forceUpdate = useCallback(() => updateState({}), []);
 
     const [nom, set_nom] = useState<string>("");
     const [description, set_description] = useState<string>("");
 
-    const [participants, set_participants] = useState<Participant[]>([{id:1,nom:"nom1",prenom:"prenom1"},{id:2,nom:"nom2",prenom:"prenom2"},{id:3,nom:"nom3",prenom:"prenom3"},{id:4,nom:"nom4",prenom:"prenom4"},{id:5,nom:"nom5",prenom:"prenom5"},{id:6,nom:"nom6",prenom:"prenom6"}]);
+    const [participants, set_participants] = useState<string[]>([]);
     const [information, set_information] = useState<boolean>(false);
     const [creation_participant, set_creation_participant] = useState<boolean>(false);
 
     const [nom_participant, set_nom_participant] = useState<string>("");
-    const [prenom_participant, set_prenom_participant] = useState<string>("");
+
+    const [message_erreur, set_message_erreur] = useState<string | null>(null);
+
+    useEffect(() => {
+        set_message_erreur(null);
+    }, [nom, description, nom_participant]);
 
     const annuler_ajout_participant = (e: SyntheticEvent) => {
         e.preventDefault();
 
         set_creation_participant(false);
-        set_prenom_participant("");
         set_nom_participant("");
+    }
+
+    const creer_participant = (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (nom_participant == "") {
+            set_message_erreur("Veuillez remplir tous les champs de votre nouveau participant");
+            return null;
+        }
+
+        if (nom_participant.length > 30) {
+            set_message_erreur("Veuillez saisir un nom de moins de 30 caractères");
+            return null;
+        }
+
+        const participants_fun: string[] = participants;
+        participants_fun.push(nom_participant);
+        set_participants(participants_fun);
+
+        set_creation_participant(false);
+        set_nom_participant("");
+
+        return null;
+    }
+
+    const supprimer_participant = (index: number) => {
+
+        if (index < 0 || index >= participants.length){
+            set_message_erreur("COUCOU INDEX " + index);
+
+            return null;
+        }
+        const participants_fun: string[] = [...participants];
+        participants_fun.splice(index, 1);
+        set_participants(participants_fun);
+        return null;
     }
 
     return (
@@ -47,17 +83,18 @@ function CreationGroupe ({ annulation }: { annulation: Function }) {
                             <TextInput id="nom-groupe" label="Nom du groupe" longueur_max={50} style={{ width: '340px' }} />
                         </div>
                         <div style={{ margin: '20px 0' }}>
-                            <TextAreaInput label="Description du groupe" longueur_max={200} />
+                            <TextAreaInput label="Description du groupe" longueur_max={200} placeholder="Optionnel" />
                         </div>
                         <hr />
                         <div>
-
+                            <div style={{ height: '10px' }}></div>
+                            <p>Ajout d'une image</p>
                         </div>
                     </div>
                     <div style={{ borderLeft: '1px solid #8E8E8E' }}></div>
                     <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <p>Participants</p>
+                            <p>Participants fictifs</p>
                             {
                                 information ?
                                 <p className="lien" onClick={() => set_information(false)}>retourner à la page précédente</p> : <p className="lien" onClick={() => set_information(true)}>infos ?</p>
@@ -75,15 +112,17 @@ function CreationGroupe ({ annulation }: { annulation: Function }) {
                                 <div style={{ overflow: 'auto' }}>
                                     {
                                         creation_participant ?
-                                        <p style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 30px', gap: '10px', background: "#4B7BB4", borderRadius: '10px', padding: '14px 10px', color: 'white', margin: '10px ' }}>
-                                            <TextInput label="Prénom" type="text" placeholder="Le prénom" value={prenom_participant} onChange={(e: any) => set_prenom_participant(e.target.value)} required />
-                                            <TextInput label="Nom" type="text" placeholder="Le nom" value={nom_participant} onChange={(e: any) => set_nom_participant(e.target.value)} required />
-                                            <FontAwesomeIcon icon={faPlus} color="white" /></p> :
+                                        <p style={{ display: 'grid', gridTemplateColumns: '1fr 50px', gap: '10px', alignItems: "center", background: "#4B7BB4", borderRadius: '10px', padding: '14px 30px', margin: '10px ' }}>
+                                            <TextInput label="Nom" type="text" placeholder="Le nom de votre participant fictif" value={nom_participant} onChange={(e: any) => set_nom_participant(e.target.value)} required />
+                                            <div className="centre">
+                                                <FontAwesomeIcon icon={faPlus} color="white" size="1x" className="hover" onClick={creer_participant} />
+                                            </div>
+                                        </p> :
                                         <></>
                                     }
                                     {
-                                        participants.map((participant: Participant) => (
-                                            <p style={{ background: "#4B7BB4", borderRadius: '10px', padding: '6px 10px', color: 'white', margin: '10px ' }}>{ participant.prenom } { participant.nom.toUpperCase() }</p>
+                                        participants.map((participant: string, index: number) => (
+                                            <p style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: "#4B7BB4", borderRadius: '10px', padding: '6px 10px', color: 'white', margin: '10px ' }}><span>{ participant }</span><FontAwesomeIcon icon={faTrashCan} className="hover" onClick={() => supprimer_participant(index)} /></p>
                                         ))
                                     }
                                     {
@@ -103,6 +142,12 @@ function CreationGroupe ({ annulation }: { annulation: Function }) {
                         }
                     </div>
                 </div>
+                {
+                    message_erreur ?
+                    <p style={{ color: 'red', marginTop: '10px' }}>
+                        { message_erreur }
+                    </p> : <></>
+                }
             </div>
         </div>
     );
