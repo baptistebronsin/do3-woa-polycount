@@ -1,6 +1,6 @@
 export interface IModel {
     pk_groupe_id: number,
-    nom: string | null,
+    nom: string,
     description: string | null,
     fk_utilisateur_createur_id: number,
     cree_le: Date,
