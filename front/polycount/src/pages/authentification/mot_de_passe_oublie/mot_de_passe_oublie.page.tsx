@@ -40,7 +40,7 @@ function MotDePasseOublie ({ set_operation_reussie }: { set_operation_reussie: F
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/mot_de_passe_oublie", api_body, navigate, true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/mot_de_passe_oublie", api_body, null, navigate, true);
 
         set_chargement(false);
 

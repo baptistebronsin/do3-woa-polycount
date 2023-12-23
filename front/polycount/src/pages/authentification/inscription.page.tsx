@@ -100,21 +100,23 @@ function Inscription() {
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", navigate, api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", null, null, navigate, api_body);
 
         set_chargement(false);
 
         if (reponse && 'data' in reponse) {
             localStorage.removeItem('token');
             localStorage.removeItem('utilisateur');
+            localStorage.removeItem('mot_de_passe');
             
             localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+            localStorage.setItem('mot_de_passe', mot_de_passe1);
             if (!authentification) {
                 toast.error("Une erreur est survenue lors de l'utilisateur du provider.");
                 return null;
             }
 
-            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data) });
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe1 });
 
             navigate('/verification-compte', { state: { email: email, mot_de_passe: mot_de_passe1, depuis: 'INSCRIPTION' } });
         }

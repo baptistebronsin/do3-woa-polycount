@@ -43,20 +43,22 @@ function Verification () {
             mot_de_passe: mot_de_passe
         };
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, navigate, false);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, null, navigate, false);
 
         if (reponse && 'data' in reponse) {
             localStorage.removeItem('token');
             localStorage.removeItem('utilisateur');
+            localStorage.removeItem('mot_de_passe');
 
             localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+            localStorage.setItem('mot_de_passe', mot_de_passe);
 
             if (!authentification) {
                 toast.error("Une erreur est survenue lors de l'utilisateur du provider.");
                 return null;
             }
 
-            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data) });
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe });
 
             if (reponse.data.token) {
                 localStorage.setItem('token', reponse.data.token);
@@ -89,7 +91,7 @@ function Verification () {
 
         set_chargement_envoi_mail(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", navigate, api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", null, null, navigate, api_body);
         
         set_chargement_envoi_mail(false);
 
@@ -129,7 +131,7 @@ function Verification () {
 
         set_chargement_changement_email(true);
 
-        const reponse1: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_email_non_verifie", api_body1, navigate, true);
+        const reponse1: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_email_non_verifie", api_body1, null, navigate, true);
 
         if (!reponse1 || !('data' in reponse1)) {
             set_chargement_changement_email(false);
@@ -143,7 +145,7 @@ function Verification () {
             email: email_enregistre
         };
 
-        const reponse2: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", api_body2, navigate, true);
+        const reponse2: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", api_body2, null, navigate, true);
         
         set_chargement_changement_email(false);
 

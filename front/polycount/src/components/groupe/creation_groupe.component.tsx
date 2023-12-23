@@ -3,10 +3,17 @@ import TextAreaInput from "../input/text_area_input.component";
 import TextInput from "../input/text_input.component";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { AxiosError, AxiosResponse } from "axios";
+import requete_api from "../../utils/requete_api.util";
+import { NavigateFunction, useNavigate } from "react-router-dom";
+import { AuthContextType, useAuth } from "../../providers/authentification.provider";
+import { toast } from "sonner";
+import { Groupe } from "../../models/groupe.model";
+import LoaderSpinner from "../loader/loader_spinner.component";
 
-function CreationGroupe ({ annulation }: { annulation: Function }) {
-    const [, updateState] = useState({});
-    const forceUpdate = useCallback(() => updateState({}), []);
+function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function, ajouter_groupe: Function }) {
+    const navigate: NavigateFunction = useNavigate();
+    const authentification: AuthContextType | null = useAuth();
 
     const [nom, set_nom] = useState<string>("");
     const [description, set_description] = useState<string>("");
@@ -17,6 +24,7 @@ function CreationGroupe ({ annulation }: { annulation: Function }) {
 
     const [nom_participant, set_nom_participant] = useState<string>("");
 
+    const [chargement, set_chargement] = useState<boolean>(false);
     const [message_erreur, set_message_erreur] = useState<string | null>(null);
 
     useEffect(() => {
@@ -66,29 +74,69 @@ function CreationGroupe ({ annulation }: { annulation: Function }) {
         return null;
     }
 
+    const creer_groupe_api = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (nom === "") {
+            set_message_erreur("Veuillez saisir un nom de groupe.");
+            return null;
+        }
+
+        const api_body: any = {
+            nom: nom,
+            description: description,
+            lien_image: null,
+            participants: participants
+        };
+
+        set_chargement(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/groupe/creation", api_body, authentification, navigate, true);
+
+        set_chargement(false);
+
+        if (reponse && 'data' in reponse) {
+            if ('message' in reponse.data)
+                toast.success(reponse.data.message);
+            else
+                toast.success("Le groupe a bien été créé.");
+
+            ajouter_groupe(Groupe.from_JSON(reponse.data.data));
+            annulation(false);
+        }
+    }
+
     return (
         <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(10, 10, 10, 0.3)' }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: '500px', zIndex: 10, padding: "10px 20px", borderRadius: '10px' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '530px' : '500px', zIndex: 10, padding: "10px 20px", borderRadius: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <h1>Création d'un groupe de partage</h1>
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                         <p className="lien" onClick={() => annulation(false)}>Annuler</p>
-                        <button className="full-button">Créer le groupe</button>
+                        {
+                            chargement ?
+                            <button className="full-button centre-centre" onClick={() => {}}>
+                                <LoaderSpinner />
+                                <p className="inline-block">&nbsp;Création en cours</p>
+                            </button> :
+                            <button className="full-button" onClick={creer_groupe_api}>Créer le groupe</button>
+                        }
                     </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1px 1fr', gap: '30px', margin: '20px' }}>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                             <label htmlFor="nom-groupe" className="inline-block">Nom du groupe :&nbsp;</label>
-                            <TextInput id="nom-groupe" label="Nom du groupe" longueur_max={50} style={{ width: '340px' }} />
+                            <TextInput id="nom-groupe" label="Nom du groupe" value={nom} longueur_max={50} onChange={(e: any) => set_nom(e.target.value)} style={{ width: '340px' }} />
                         </div>
                         <div style={{ margin: '20px 0' }}>
-                            <TextAreaInput label="Description du groupe" longueur_max={200} placeholder="Optionnel" />
+                            <TextAreaInput label="Description du groupe" value={description} longueur_max={200} onChange={(e: any) => set_description(e.target.value)} placeholder="Optionnel" />
                         </div>
                         <hr />
                         <div>
                             <div style={{ height: '10px' }}></div>
                             <p>Ajout d'une image</p>
+                             <p>A FAIRE</p>
                         </div>
                     </div>
                     <div style={{ borderLeft: '1px solid #8E8E8E' }}></div>
@@ -144,7 +192,7 @@ function CreationGroupe ({ annulation }: { annulation: Function }) {
                 </div>
                 {
                     message_erreur ?
-                    <p style={{ color: 'red', marginTop: '10px' }}>
+                    <p className="centre" style={{ color: 'red', marginTop: '10px' }}>
                         { message_erreur }
                     </p> : <></>
                 }

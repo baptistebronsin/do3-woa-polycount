@@ -50,22 +50,24 @@ function Connexion() {
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, navigate, true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, null, navigate, true);
 
         set_chargement(false);
 
         if (reponse && 'data' in reponse) {
             localStorage.removeItem('token');
             localStorage.removeItem('utilisateur');
+            localStorage.removeItem('mot_de_passe');
 
             localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+            localStorage.setItem('mot_de_passe', mot_de_passe);
 
             if (!authentification) {
                 toast.error("Une erreur est survenue lors de l'utilisateur du provider.");
                 return null;
             }
 
-            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data) });
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe });
 
             if (reponse.data.token) {
                 localStorage.setItem('token', reponse.data.token);

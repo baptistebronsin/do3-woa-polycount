@@ -18,6 +18,7 @@ export class Groupe {
     }
 
     public static from_JSON (json: any): Groupe {
+        console.log(json);
         return new Groupe(
             json['pk_groupe_id'],
             json['nom'],

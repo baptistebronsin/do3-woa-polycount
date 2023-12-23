@@ -32,7 +32,7 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
             token: token
         };
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/verifier_mot_de_passe_token", api_body, navigate, true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/verifier_mot_de_passe_token", api_body, null, navigate, true);
 
         if (!reponse || !('data' in reponse)) {
             navigate("/connexion");
@@ -62,7 +62,7 @@ function MotDePasseOublieReinitialiser ({ email, token }: { email: string, token
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_mot_de_passe_oublie", api_body, navigate, true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/modifier_mot_de_passe_oublie", api_body, null, navigate, true);
 
         set_chargement(false);
 
