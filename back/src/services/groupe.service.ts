@@ -57,3 +57,13 @@ export const ajouter_participant = async (groupe_id: number, utilisateur_id: num
 
     return result;
 }
+
+export const recuperer_participants = async (groupe_id: number): Promise<Participant_Groupe[]> => {
+    const result: Participant_Groupe[] = await prisma.participant_Groupe.findMany({
+        where: {
+            fk_groupe_id: groupe_id
+        }
+    });
+
+    return result;
+}
