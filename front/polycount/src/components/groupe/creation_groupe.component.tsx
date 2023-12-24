@@ -1,4 +1,4 @@
-import { SyntheticEvent, useCallback, useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import TextAreaInput from "../input/text_area_input.component";
 import TextInput from "../input/text_input.component";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -41,7 +41,7 @@ function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function,
     const creer_participant = (e: SyntheticEvent) => {
         e.preventDefault();
 
-        if (nom_participant == "") {
+        if (nom_participant === "") {
             set_message_erreur("Veuillez remplir tous les champs de votre nouveau participant");
             return null;
         }
@@ -174,7 +174,7 @@ function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function,
                                         ))
                                     }
                                     {
-                                        participants.length == 0 && !creation_participant ?
+                                        participants.length === 0 && !creation_participant ?
                                         <div className="centre-centre"><p>Aucun participant créé</p></div> :
                                         <></>
                                     }

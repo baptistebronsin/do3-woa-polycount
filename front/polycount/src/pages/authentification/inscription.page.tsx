@@ -100,7 +100,7 @@ function Inscription() {
 
         set_chargement(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", null, null, navigate, api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/inscription", api_body, null, navigate, true);
 
         set_chargement(false);
 
@@ -130,7 +130,7 @@ function Inscription() {
                     <div className="grid-20-auto-20">
                         <p>Inscription</p>
                         {
-                                page_inscription == 1 ?
+                                page_inscription === 1 ?
                                 <div className="grid-2-auto gap20">
                                     <div>
                                         <form>

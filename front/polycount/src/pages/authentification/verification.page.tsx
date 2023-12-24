@@ -91,7 +91,7 @@ function Verification () {
 
         set_chargement_envoi_mail(true);
 
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", null, null, navigate, api_body);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/utilisateur/verification_compte/renouveller", api_body, null, navigate, true);
         
         set_chargement_envoi_mail(false);
 
@@ -114,7 +114,7 @@ function Verification () {
             return null;
         }
 
-        if (email_input == email) {
+        if (email_input === email) {
             set_erreur_page("Veuillez saisir une adresse email différente de la précédente.");
             return null;
         }
@@ -203,7 +203,7 @@ function Verification () {
                                 <div>
                                     <p>
                                         {
-                                            depuis == 'CONNEXION' ?
+                                            depuis === 'CONNEXION' ?
                                             <>
                                             Lors de votre inscription, un mail de bienvenue contenant un lien de vérification de compte vous a été envoyé.
                                             </> :

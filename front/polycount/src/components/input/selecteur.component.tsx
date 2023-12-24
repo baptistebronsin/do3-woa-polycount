@@ -4,7 +4,7 @@ function Selecteur({ label, options, valeur_defaut, changement }: SelecteurProps
         <label>{label}</label>
         <select onChange={(e: any) => changement(e.target.value)}>
           {options.map(option => (
-            valeur_defaut && valeur_defaut == option.value ?
+            valeur_defaut && valeur_defaut === option.value ?
             <option value={option.value} key={option.value} selected>
               {option.label}
             </option> :

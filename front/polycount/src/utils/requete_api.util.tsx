@@ -3,7 +3,7 @@ import { NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
 import { Suspension } from "../models/suspension.model";
 import deconnexion from "./deconnexion.util";
-import { AuthContextType, useAuth } from "../providers/authentification.provider";
+import { AuthContextType } from "../providers/authentification.provider";
 
 const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body: any, authentification: AuthContextType | null, navigate: NavigateFunction, afficher_erreur: boolean = true, second_essaie: boolean = false): Promise<AxiosResponse | AxiosError | null> => {
     const api_url: string = "http://localhost:8080";
@@ -41,26 +41,26 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
             if (!afficher_erreur)
                 return erreur;
 
-            if (erreur.code == "ERR_NETWORK") {
+            if (erreur.code === "ERR_NETWORK") {
                 toast.error("Impossible de se connecter au serveur.");
             } else if (second_essaie) {
-                toast.warning("Votre session a expiré.");
+                toast.warning("Votre session a expiré 2.");
                 deconnexion(null, authentification, navigate, false);
                 navigate('/connexion');
                 return null;
             } else if (erreur.response && erreur.response.data) {
                 if ('status' in erreur.response) {
-                    if (erreur.response.status == 500) {
+                    if (erreur.response.status === 500) {
                         if ('message' in erreur.response.data) {
                             toast.error(erreur.response.data.message);
                         } else {
                             toast.error("Une erreur serveur est survenue.");
                         }
-                    } else if (erreur.response.status == 403 && erreur.response.data.message == "Votre compte a été suspendu.") {
+                    } else if (erreur.response.status === 403 && erreur.response.data.message === "Votre compte a été suspendu.") {
                         deconnexion(null, authentification, navigate, false);
                         navigate('/suspension', { state: { suspension: Suspension.from_JSON(erreur.response.data.data) } });
                         return null;
-                    } else if (erreur.response.status == 401 && erreur.response.data.message == "Token erroné !") {
+                    } else if (erreur.response.status === 401 && erreur.response.data.message === "Token erroné !") {
                         if (!authentification) {
                             navigate('/connexion');
                             return null;
@@ -73,6 +73,8 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
                 
                         const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/utilisateur/connexion", api_body, null, navigate, true);
                 
+                        console.log(reponse);
+
                         if (reponse && 'data' in reponse && reponse.data.token) {
                             const token_api: string = reponse.data.token;
 

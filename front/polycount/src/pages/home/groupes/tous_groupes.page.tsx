@@ -1,4 +1,4 @@
-import { NavigateFunction, useFetcher, useNavigate } from "react-router-dom";
+import { NavigateFunction, useNavigate } from "react-router-dom";
 import { AuthContextType, useAuth } from "../../../providers/authentification.provider";
 import { useEffect, useState } from "react";
 import { Groupe } from "../../../models/groupe.model";
@@ -47,26 +47,29 @@ function TousGroupes() {
                 creation_groupe ?
                 <CreationGroupe annulation={set_creation_groupe} ajouter_groupe={ajouter_groupe} /> : <></>
             }
-            <div>
-                <button className="lien" onClick={() => set_creation_groupe(true)}>Créer un groupe</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {
+                    !chargement && groupes.length > 0 ?
+                    <h1 style={{ display: 'inline-block' }}>Vous avez {groupes.length} {groupes.length > 1 ? "groupes partagés" : "groupe partagé"}</h1> :
+                    <p></p>
+                }
+                <button className="full-button" onClick={() => set_creation_groupe(true)}>Créer un groupe</button>
             </div>
+            <div style={{ height: '20px' }}></div>
             {
                 chargement ?
                 <LoaderCenter message="Récupération des groupes" /> :
                 <>
                     {
-                        groupes.length == 0 ?
+                        groupes.length === 0 ?
                         <div className="centre-centre"><h1>Vous n'avez aucun groupe partagé.</h1></div> :
-                        <>
-                            <h1>Vous avez {groupes.length} groupes partagés.</h1>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '30px' }}>
-                                {
-                                    groupes.map((groupe: Groupe) => {
-                                        return (<CarteGroupe groupe={groupe} />);
-                                    })
-                                }
-                            </div>
-                        </>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '30px' }}>
+                            {
+                                groupes.map((groupe: Groupe) => {
+                                    return (<CarteGroupe groupe={groupe} />);
+                                })
+                            }
+                        </div>
                     }
                 </>
             }

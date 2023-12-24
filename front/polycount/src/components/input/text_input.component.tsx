@@ -1,21 +1,15 @@
-import { useId, useState } from "react";
+import { useId } from "react";
 
-function TextInput({ label, longueur_max, valeur_defaut, ...props }: any) {
+function TextInput({ value, label, longueur_max, valeur_defaut, ...props }: any) {
     const id: string = useId();
-
-    const [contenu, set_contenu] = useState<string>(valeur_defaut ?? '');
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        set_contenu(e.target.value);
-    };
 
     return (
         <div className="input-container">
             <div className="input-border" style={ longueur_max != null ? {height: '60px'} : {}}>
-                <input id={id} onChange={handleChange} value={contenu} maxLength={longueur_max} {...props} spellCheck="false" />
+                <input id={id} value={value} maxLength={longueur_max} {...props} spellCheck="false" />
                 {longueur_max && (
                     <div className="character-counter">
-                        {contenu.length}/{longueur_max}
+                        {value.length}/{longueur_max}
                     </div>
                     )
                 }

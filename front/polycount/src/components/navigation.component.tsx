@@ -36,7 +36,7 @@ function Navigation() {
             </nav>
             {
                 afficher_compte ?
-                <div style={{ position: 'absolute', top: '40px', right: '10px' }} onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>
+                <div style={{ position: 'absolute', top: '40px', right: '10px', zIndex: 8 }} onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>
                     <div style={{ marginTop: '10px', background: 'white', padding: '10px', borderRadius: '6px' }}>
                         <p>Mon compte</p>
                         <hr style={{ margin: '10px 0' }} />

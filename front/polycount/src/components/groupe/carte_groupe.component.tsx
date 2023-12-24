@@ -5,8 +5,6 @@ import { AxiosError, AxiosResponse } from 'axios';
 import requete_api from '../../utils/requete_api.util';
 import { AuthContextType, useAuth } from '../../providers/authentification.provider';
 import { ParticipantGroupe } from '../../models/participant_groupe.model';
-import LoaderSpinner from '../loader/loader_spinner.component';
-
 interface CarteGroupeProps {
     groupe: Groupe;
 }
@@ -48,7 +46,7 @@ const CarteGroupe: React.FC<CarteGroupeProps> = ({ groupe }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '10px' }}>
                 {
                     groupe.lien_image ?
-                    <img src={groupe.lien_image} alt={`image du groupe partagé numéro ${groupe.pk_groupe_id}`} /> :
+                    <img src={groupe.lien_image} alt={`groupe partagé numéro ${groupe.pk_groupe_id}`} /> :
                     <div style={{ background: 'linear-gradient(135deg, #4B7BB4, #225292)', height: '80px', borderRadius: '6px' }}></div>
                 }
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -62,9 +60,13 @@ const CarteGroupe: React.FC<CarteGroupeProps> = ({ groupe }) => {
             </div>
             <div style={{ height: '10px' }}></div>
             <hr />
-            <p style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', color: 'gray' }}>
-                { groupe.description && groupe.description.length > 0 ? groupe.description : "Pas de description" }
-            </p>
+            {
+                groupe.cloture_le ?
+                <p style={{ color: 'red' }}>Cloturé le { groupe.cloture_le.toLocaleDateString() }</p> :
+                <p style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', color: 'gray' }}>
+                    { groupe.description && groupe.description.length > 0 ? groupe.description : "Pas de description" }
+                </p>
+            }
         </div>
     );
 };
