@@ -6,6 +6,7 @@ import LoaderCenter from "../../../components/loader/loader_center.component";
 import CreationGroupe from "../../../components/groupe/creation_groupe.component";
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../../utils/requete_api.util";
+import CarteGroupe from "../../../components/groupe/carte_groupe.component";
 
 function TousGroupes() {
     const authentification: AuthContextType | null = useAuth();
@@ -17,14 +18,14 @@ function TousGroupes() {
     const [creation_groupe, set_creation_groupe] = useState<boolean>(false);
 
     useEffect(() => {
-        creer_groupe_api();
+        recuperer_groupe_api();
     }, []);
 
     const ajouter_groupe = async (groupe: Groupe) => {
         set_groupes([...groupes, groupe]);
     }
 
-    const creer_groupe_api = async () => {
+    const recuperer_groupe_api = async () => {
         set_chargement(true);
 
         const reponse: AxiosResponse | AxiosError | null = await requete_api('GET', "/groupe/", null, authentification, navigate, true);
@@ -34,10 +35,9 @@ function TousGroupes() {
         if (reponse && 'data' in reponse) {
             set_groupes(reponse.data.data.map((groupe: Groupe) => {
               return Groupe.from_JSON(groupe);
+            }).sort((a: Groupe, b: Groupe) => {
+                return a.pk_groupe_id > b.pk_groupe_id ? 1 : -1;
             }));
-
-            console.log(reponse.data.data);
-            console.log(groupes);
         }
     }
 
@@ -57,7 +57,16 @@ function TousGroupes() {
                     {
                         groupes.length == 0 ?
                         <div className="centre-centre"><h1>Vous n'avez aucun groupe partagé.</h1></div> :
-                        <div className="centre-centre"><h1>Vous avez {groupes.length} groupes partagés.</h1></div>
+                        <>
+                            <h1>Vous avez {groupes.length} groupes partagés.</h1>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '30px' }}>
+                                {
+                                    groupes.map((groupe: Groupe) => {
+                                        return (<CarteGroupe groupe={groupe} />);
+                                    })
+                                }
+                            </div>
+                        </>
                     }
                 </>
             }

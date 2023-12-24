@@ -79,7 +79,7 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
                             localStorage.setItem('token', token_api);
                             authentification.set_authentification({ token: token_api, utilisateur: authentification.authentification.utilisateur, mot_de_passe: authentification.authentification.mot_de_passe });
 
-                            return requete_api(method, url, body, authentification, navigate, second_essaie = true);
+                            return requete_api(method, url, body, authentification, navigate, true, true);
                         } else {
                             toast.warning("Votre session a expiré.");
                             deconnexion(null, authentification, navigate, false);

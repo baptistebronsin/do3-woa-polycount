@@ -107,7 +107,7 @@ function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function,
     }
 
     return (
-        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(10, 10, 10, 0.3)' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(10, 10, 10, 0.3)', zIndex: 9 }}>
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '530px' : '500px', zIndex: 10, padding: "10px 20px", borderRadius: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <h1>Création d'un groupe de partage</h1>
