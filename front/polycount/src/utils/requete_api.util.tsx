@@ -44,7 +44,7 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
             if (erreur.code === "ERR_NETWORK") {
                 toast.error("Impossible de se connecter au serveur.");
             } else if (second_essaie) {
-                toast.warning("Votre session a expiré 2.");
+                toast.warning("Votre session a expiré.");
                 deconnexion(null, authentification, navigate, false);
                 navigate('/connexion');
                 return null;
@@ -75,13 +75,22 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
                 
                         console.log(reponse);
 
-                        if (reponse && 'data' in reponse && reponse.data.token) {
+                        if (reponse && 'data' in reponse && reponse.data.token != null) {
                             const token_api: string = reponse.data.token;
 
-                            localStorage.setItem('token', token_api);
+                            try {
+                                localStorage.removeItem('token');
+                                localStorage.setItem('token', token_api);
+                            } catch (erreur: any) {
+                                toast.error("Impossible de stocker des informations dans le stockage du navigateur.");
+                                deconnexion(null, authentification, navigate, false);
+                                navigate('/connexion');
+                                return null;
+                            }
+                            
                             authentification.set_authentification({ token: token_api, utilisateur: authentification.authentification.utilisateur, mot_de_passe: authentification.authentification.mot_de_passe });
 
-                            return requete_api(method, url, body, authentification, navigate, true, true);
+                            return requete_api(method, url, body, { authentification: { token: token_api, utilisateur: authentification.authentification.utilisateur, mot_de_passe: authentification.authentification.mot_de_passe }, set_authentification : authentification.set_authentification }, navigate, true, true);
                         } else {
                             toast.warning("Votre session a expiré.");
                             deconnexion(null, authentification, navigate, false);

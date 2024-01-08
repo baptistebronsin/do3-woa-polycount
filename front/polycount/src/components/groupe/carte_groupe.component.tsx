@@ -54,7 +54,7 @@ const CarteGroupe: React.FC<CarteGroupeProps> = ({ groupe }) => {
                     {
                         chargement ?
                         <p className="inline-block" style={{ margin: 0, padding: 0, color: 'gray' }}>Chargement en cours</p> :
-                        <p style={{ color: 'gray' }}>{participants.length + 1} {participants.length + 1 > 1 ? "membres" : "membre"}</p>
+                        <p style={{ color: 'gray' }}>{ participants.length } { participants.length > 1 ? "membres" : "membre"}</p>
                     }
                 </div>
             </div>
