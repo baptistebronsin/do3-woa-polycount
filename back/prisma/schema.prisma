@@ -24,8 +24,6 @@ model Utilisateur {
 
   groupes_crees      Groupe[]                   @relation("CreateurGroupe")
   participant_groupe Participant_Groupe[]       @relation("ParticipantGroupe")
-  cree_depenses      Depense[]                  @relation("DepensesCreeUtilisateur")
-  liee_depenses      Utilisateur_Liee_Depense[] @relation("UtilisateurLieeDepenses")
   tokens             Token[]                    @relation("TokenUtilisateur")
   suspensions        Suspension[]               @relation("SuspensionsUtilisateur")
   souscriptions      Souscription_Abonnement[]  @relation("SouscriptionAbonnementUtilisateur")
@@ -65,6 +63,8 @@ model Participant_Groupe {
 
   utilisateur_participant           Utilisateur? @relation("ParticipantGroupe", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
   groupe                            Groupe       @relation("Participants", fields: [fk_groupe_id], references: [pk_groupe_id])
+  cree_depenses                     Depense[]    @relation("DepensesCreeParticipant")
+  liee_depenses                     Participant_Groupe_Liee_Depense[] @relation("ParticipantGroupeLieeDepenses")
 
   @@map("Participant_Groupe")
 }
@@ -83,30 +83,30 @@ model Tag {
 model Depense {
   pk_depense_id              Int                         @id @default(autoincrement())
   fk_groupe_id               Int
-  fk_utilisateur_createur_id Int
+  fk_participant_createur_id Int
   titre                      String?                     @db.VarChar(100)
   montant                    Float
   ajoute_le                  DateTime                    @default(now())
   lien_image                 String?
 
   groupe_lie                 Groupe                      @relation("Depenses", fields: [fk_groupe_id], references: [pk_groupe_id])
-  utilisateur_createur       Utilisateur                 @relation("DepensesCreeUtilisateur", fields: [fk_utilisateur_createur_id], references: [pk_utilisateur_id])
-  utilisateurs_lies          Utilisateur_Liee_Depense[]  @relation("DepensesLieeUtiliasteur")
+  participant_createur       Participant_Groupe                 @relation("DepensesCreeParticipant", fields: [fk_participant_createur_id], references: [pk_participant_groupe_id])
+  participants_lies          Participant_Groupe_Liee_Depense[]  @relation("DepensesLieeParticipantGroupe")
   tags                       Tag[]                       @relation("TagDepense")
 
   @@map("Depense")
 }
 
-model Utilisateur_Liee_Depense {
-  fk_utilisateur_id Int
+model Participant_Groupe_Liee_Depense {
+  fk_participant_groupe_id Int
   fk_depense_id     Int
-  montant           Float
+  montant           Float?
 
-  utilisateur       Utilisateur @relation("UtilisateurLieeDepenses", fields: [fk_utilisateur_id], references: [pk_utilisateur_id])
-  depense           Depense     @relation("DepensesLieeUtiliasteur", fields: [fk_depense_id], references: [pk_depense_id])
+  participant       Participant_Groupe @relation("ParticipantGroupeLieeDepenses", fields: [fk_participant_groupe_id], references: [pk_participant_groupe_id])
+  depense           Depense     @relation("DepensesLieeParticipantGroupe", fields: [fk_depense_id], references: [pk_depense_id])
 
-  @@id([fk_utilisateur_id, fk_depense_id])
-  @@map("Utilisateur_Liee_Depense")
+  @@id([fk_participant_groupe_id, fk_depense_id])
+  @@map("Participant_Groupe_Liee_Depense")
 }
 
 model Token {

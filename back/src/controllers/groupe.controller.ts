@@ -47,6 +47,86 @@ export const recuperer_tous_groupes: RequestHandler = async (req: Request, res: 
     }
 }
 
+export const recuperer_un_groupe: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const { groupe_id_param } = req.params;
+
+    if (!["string"].includes(typeof groupe_id_param) || groupe_id_param == "")
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "groupe_id", type: "string", facultatif: false }
+            ]
+        });
+
+    if (isNaN(Number(groupe_id_param)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le groupe_id doit être un nombre."
+        });
+
+    const groupe_id: number = Number(groupe_id_param);
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe partagé n'existe pas."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des informations du groupe.",
+            erreur: error
+        });
+    }
+
+    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id) {
+        try {
+            const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
+
+            if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
+                return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                    message: "Vous n'êtes pas affilié à ce groupe."
+                });
+        } catch (error: PrismaClientKnownRequestError | any) {
+            return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+                erreur: error
+            });
+        }
+    }
+
+    return res.status(http_response_util.statuts.succes.ok).json({
+        message: "Voici le groupe partagé.",
+        data: {
+            ...groupe_existant,
+            cree_le: moment(groupe_existant.cree_le).format(moment_date_time_format),
+            cloture_le: groupe_existant.cloture_le ? moment(groupe_existant.cloture_le).format(moment_date_time_format) : null
+        }
+    });
+}
+
 export const creation_groupe: RequestHandler = async (req: Request, res: Response) => {
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;
@@ -113,6 +193,15 @@ export const creation_groupe: RequestHandler = async (req: Request, res: Respons
                 erreur: error
             });
         }
+    }
+
+    try {
+        await groupe_service.ajouter_participant(creation_groupe.pk_groupe_id, utilisateur_id, null);
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de l'ajout du participant principal au groupe.",
+            erreur: error
+        });
     }
 
     return res.status(http_response_util.statuts.succes.cree).json({

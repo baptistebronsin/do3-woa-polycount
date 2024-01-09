@@ -1,14 +1,8 @@
-import { Groupe, Participant_Groupe, PrismaClient } from "@prisma/client";
+import { Groupe, Participant_Groupe, PrismaClient, Utilisateur } from "@prisma/client";
 
-const prisma: PrismaClient = new PrismaClient()
+const prisma: PrismaClient = new PrismaClient();
 
 export const recuperer_tous_groupes = async (utilisateur_id: number): Promise<Groupe[]> => {
-    const groupes_cree: Groupe[] = await prisma.groupe.findMany({
-        where: {
-            fk_utilisateur_createur_id: utilisateur_id
-        }
-    });
-
     const groupes_rejoint: Groupe[] = await prisma.groupe.findMany({
         where: {
             participants: {
@@ -22,7 +16,17 @@ export const recuperer_tous_groupes = async (utilisateur_id: number): Promise<Gr
           }
     });
 
-    return groupes_cree.concat(groupes_rejoint);
+    return groupes_rejoint;
+}
+
+export const recuperer_groupe = async (groupe_id: number): Promise<Groupe | null> => {
+    const result: Groupe | null = await prisma.groupe.findUnique({
+        where: {
+            pk_groupe_id: groupe_id
+        }
+    });
+
+    return result;
 }
 
 export const creer_groupe = async (nom: string, description: string | null, utilisateur_id: number, lien_image: string | null): Promise<Groupe> => {
