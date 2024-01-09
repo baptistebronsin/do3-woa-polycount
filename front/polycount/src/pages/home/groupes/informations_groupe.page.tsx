@@ -57,70 +57,60 @@ function InformationsGroupe() {
   useEffect(() => {
     set_chargement_groupe(true);
 
-    const reteneur_groupe = recuperer_groupe_api();
-    const reteneur_depenses = recuperer_depenses_api();
-    const reteneur_utilisateurs = recuperer_utilisateurs_api();
-    const reteneur_affiliations = recuperer_affiliations_api();
-    const reteneur_tags = recuperer_tags_depenses_api();
-    // recuperer_donnees_api();
-
-    Promise.all([
-      reteneur_groupe,
-      reteneur_depenses,
-      reteneur_utilisateurs,
-      reteneur_affiliations,
-      reteneur_tags,
-    ]).then(
-      ([
-        groupe_api,
-        depenses_api,
-        utilisateurs_api,
-        affiliations_api,
-        tags_depenses_api,
-      ]) => {
-        set_groupe(groupe_api); 
-        set_depenses(depenses_api);
-        set_utilisateurs(utilisateurs_api);
-        set_attribution_depenses(affiliations_api);
-        set_attribution_tags(tags_depenses_api);
-
-
-        console.table(groupe);
-        console.table(depenses);
-        console.table(utilisateurs);
-        console.table(attribution_depenses);
-        console.table(attribution_tags);
-
+    recuperer_groupe_api().then((groupe_api: Groupe | null) => {
+      if (groupe_api === null) {
         set_chargement_groupe(false);
-        set_chargement_depenses(false);
+        return;
       }
-    );
+
+      set_groupe(groupe_api);
+      set_chargement_groupe(false);
+      set_chargement_depenses(true);
+
+      const reteneur_depenses = recuperer_depenses_api();
+      const reteneur_utilisateurs = recuperer_utilisateurs_api();
+      const reteneur_affiliations = recuperer_affiliations_api();
+      const reteneur_tags = recuperer_tags_depenses_api();
+      const reteneur_participants = recuperer_participants_api();
+      // recuperer_donnees_api();
+
+      Promise.all([
+        reteneur_depenses,
+        reteneur_utilisateurs,
+        reteneur_affiliations,
+        reteneur_tags,
+        reteneur_participants,
+      ]).then(
+        ([
+          depenses_api,
+          utilisateurs_api,
+          affiliations_api,
+          tags_depenses_api,
+          participants_api,
+        ]) => {
+          set_depenses(depenses_api);
+          set_utilisateurs(utilisateurs_api);
+          set_attribution_depenses(affiliations_api);
+          set_attribution_tags(tags_depenses_api);
+          set_participants_groupe(participants_api);
+        }
+      );
+
+      set_chargement_depenses(false);
+    });
   }, []);
 
-//   const recuperer_donnees_api = async () => {
-//     const groupe_api: Groupe | null = await recuperer_groupe_api();
-//     set_groupe(groupe_api);
+  useEffect(() => {
+    if (participants_groupe.length > 0)
+      set_nom_participants(calculer_nom_participant());
+  }, [utilisateurs, participants_groupe]);
 
-//     const participants_api: ParticipantGroupe[] =
-//       await recuperer_participants_api();
-//     set_participants_groupe(participants_api);
-
-//     // const depenses_api: Depense[] = await recuperer_depenses_api();
-//     // set_depenses(depenses_api);
-
-//     const utilisateurs_api: Utilisateur[] = await recuperer_utilisateurs_api();
-//     set_utilisateurs(utilisateurs_api);
-
-//     const affiliations_api: AffiliationDepense[] =
-//       await recuperer_affiliations_api();
-//     set_attribution_depenses(affiliations_api);
-
-//     const tags_api: { fk_depense_id: number; fk_tag_id: number }[] =
-//       await recuperer_tags_depenses_api();
-//     set_attribution_tags(tags_api);
-
-//     set_nom_participants(calculer_nom_participant());
-//   };
+  useEffect(() => {
+    set_total_depense(depenses.reduce(
+      (somme: number, depense: Depense) =>
+        somme += depense.montant, 0
+    ))
+  }, [depenses]);
 
   const recuperer_groupe_api = async (): Promise<Groupe | null> => {
     const reponse: AxiosResponse | AxiosError | null = await requete_api(
@@ -129,7 +119,7 @@ function InformationsGroupe() {
       null,
       authentification,
       navigate,
-      true
+      false
     );
 
     if (reponse && "data" in reponse)
@@ -182,7 +172,6 @@ function InformationsGroupe() {
     );
 
     if (!response || !("data" in response) || !("data" in response.data)) {
-      set_chargement_depenses(false);
       return [];
     }
 
@@ -282,7 +271,7 @@ function InformationsGroupe() {
                   <h1 className="inline-block">{groupe.nom}</h1>
                   <p className="inline-block">
                     {chargement_depenses ? (
-                      <p></p>
+                      <></>
                     ) : (
                       <strong>{total_depense.toFixed(2)} €</strong>
                     )}
@@ -302,11 +291,16 @@ function InformationsGroupe() {
                     affiliations={attribution_depenses}
                   />
                   <div style={{ margin: "0 20px" }}>
-                    <GraphiqueDepense
-                      nom_participants={nom_participants}
-                      depenses={depenses}
-                      affiliations={attribution_depenses}
-                    />
+                    {
+                      nom_participants.length > 0 ?
+                      <GraphiqueDepense
+                        nom_participants={nom_participants}
+                        depenses={depenses}
+                        affiliations={attribution_depenses}
+                      /> :
+                      <LoaderCenter message="Chargement du nom des participants" />
+                    }
+                    
                   </div>
                 </div>
               )}

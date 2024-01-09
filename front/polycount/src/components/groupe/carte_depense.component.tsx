@@ -40,14 +40,27 @@ function CarteDepense({ depense, nom_participants, affiliations }: { depense: De
             <hr style={{ margin: '10px 0' }} />
             <div>
                 <p style={{ color: 'grey' }}>Participants liés</p>
-                <div>
+                <div style={{ display: 'flex' }}>
                     {
                         affiliations.filter(
                             (affiliation: AffiliationDepense) => affiliation.fk_depense_id === depense.pk_depense_id
                         ).map(
-                            (affiliation: AffiliationDepense) => {
-                                return nom_participants.find(
-                                    (participant: NomParticipant) => participant.pk_participant_id === affiliation.fk_participant_groupe_id)?.nom
+                            (affiliation: AffiliationDepense, index: number) => {
+                                if (index == 0)
+                                    return (
+                                    <p key={index}>{nom_participants.find(
+                                        (participant: NomParticipant) => participant.pk_participant_id === affiliation.fk_participant_groupe_id)?.nom}</p>
+                                        )
+                                else if (affiliations.filter((affiliation: AffiliationDepense) => affiliation.fk_depense_id === depense.pk_depense_id).length - 1 == index)
+                                    return (
+                                        <p key={index}>&nbsp;et {nom_participants.find(
+                                            (participant: NomParticipant) => participant.pk_participant_id === affiliation.fk_participant_groupe_id)?.nom}</p>
+                                            )
+                                else
+                                    return (
+                                        <p key={index}>, {nom_participants.find(
+                                            (participant: NomParticipant) => participant.pk_participant_id === affiliation.fk_participant_groupe_id)?.nom}</p>
+                                            )
                         })
                     }
                 </div>
