@@ -101,20 +101,18 @@ export const recuperer_un_groupe: RequestHandler = async (req: Request, res: Res
         });
     }
 
-    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id) {
-        try {
-            const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
 
-            if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
-                return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
-                    message: "Vous n'êtes pas affilié à ce groupe."
-                });
-        } catch (error: PrismaClientKnownRequestError | any) {
-            return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
-                message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
-                erreur: error
+        if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Vous n'êtes pas affilié à ce groupe."
             });
-        }
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+            erreur: error
+        });
     }
 
     return res.status(http_response_util.statuts.succes.ok).json({

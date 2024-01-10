@@ -97,6 +97,129 @@ export const recuperer_toutes_depenses: RequestHandler = async (req: Request, re
     }
 }
 
+export const creer_depense: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const { groupe_id_param, titre, montant, participants } = req.body;
+
+    if (!["number"].includes(typeof groupe_id_param) || !["string"].includes(typeof titre) || titre == "" || !["number"].includes(typeof montant) || !Array.isArray(participants))
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans la requête.",
+            parametres: [
+                { nom: "groupe_id_param", type: "string", facultatif: false },
+                { nom: "titre", type: "string", facultatif: false },
+                { nom: "montant", type: "float", facultatif: false },
+                { nom: "participants", type: "array", facultatif: false }
+            ]
+        });
+
+    if (isNaN(Number(groupe_id_param)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le groupe_id doit être un nombre."
+        });
+
+    if (isNaN(Number(montant)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le montant doit être un nombre."
+        });
+
+    const groupe_id: number = Number(groupe_id_param);
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe partagé n'existe pas."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des informations du groupe.",
+            erreur: error
+        });
+    }
+
+    let participants_existant: Participant_Groupe | null = null;
+
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
+
+        participants_existant = participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id);
+
+        if (!participants_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Vous n'êtes pas affilié à ce groupe."
+            });
+
+        if (participants_existant.quitte_le != null)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Vous avez quitté ce groupe."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+            erreur: error
+        });
+    }
+
+    let depense: Depense | null = null;
+
+    try {
+        depense = await depense_service.creer_depense(groupe_id, participants_existant.pk_participant_groupe_id, titre, montant);
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la création de la dépense.",
+            erreur: error
+        });
+    }
+
+    try {
+        participants.map(async (participant: { fk_participant_groupe_id: number, montant: number | null }) => {
+            await depense_service.lier_depense_participants(depense.pk_depense_id, participant.fk_participant_groupe_id, participant.montant);
+        });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la liaison de la dépense avec les participants.",
+            erreur: error
+        });
+    }
+
+    if (!participants.find((participant: { fk_participant_groupe_id: number, montant: number | null }) => participant.fk_participant_groupe_id == participants_existant.pk_participant_groupe_id)) {
+        try {
+            await depense_service.lier_depense_participants(depense.pk_depense_id, participants_existant.pk_participant_groupe_id, null);
+        } catch (error: PrismaClientKnownRequestError | any) {
+            return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de la liaison de la dépense avec les participants.",
+                erreur: error
+            });
+        }
+    }
+    return res.status(http_response_util.statuts.succes.ok).json({
+        message: "La dépense a été créée avec succès.",
+        data: depense
+    });
+}
+
 export const recuperer_tous_tags: RequestHandler = async (req: Request, res: Response) => {
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;

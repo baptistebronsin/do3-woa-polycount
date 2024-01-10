@@ -84,7 +84,7 @@ model Depense {
   pk_depense_id              Int                         @id @default(autoincrement())
   fk_groupe_id               Int
   fk_participant_createur_id Int
-  titre                      String?                     @db.VarChar(100)
+  titre                      String?                     @db.VarChar(50)
   montant                    Float
   ajoute_le                  DateTime                    @default(now())
   lien_image                 String?

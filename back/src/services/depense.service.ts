@@ -12,6 +12,19 @@ export const recuperer_toutes_depenses = async (groupe_id: number): Promise<Depe
     return result;
 }
 
+export const creer_depense = async (groupe_id: number, participant_createur: number, titre: string, montant: number): Promise<Depense> => {
+    const result: Depense = await prisma.depense.create({
+        data: {
+            fk_groupe_id: groupe_id,
+            fk_participant_createur_id: participant_createur,
+            titre: titre,
+            montant: montant
+        }
+    });
+
+    return result;
+}
+
 export const recuperer_tous_tags = async (): Promise<Tag[]> => {
     const result: Tag[] = await prisma.tag.findMany();
 
@@ -46,6 +59,18 @@ export const recuperer_toutes_affiliations_depenses = async (groupe_id: number):
         },
         include: {
             depense: true
+        }
+    });
+
+    return result;
+}
+
+export const lier_depense_participants = async (depense_id: number, participant_id: number, montant: number | null): Promise<Participant_Groupe_Liee_Depense> => {
+    const result: Participant_Groupe_Liee_Depense = await prisma.participant_Groupe_Liee_Depense.create({
+        data: {
+            fk_depense_id: depense_id,
+            fk_participant_groupe_id: participant_id,
+            montant: montant
         }
     });
 
