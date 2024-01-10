@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Utilisateur } from "../../../models/utilisateur.model";
 import { AffiliationDepense } from "../../../models/affiliation_depense.model";
 import GraphiqueDepense from "../../../components/groupe/graphique_depense.component";
+import CreationDepense from "../../../components/groupe/creation_depense.component";
 
 export interface NomParticipant {
   pk_participant_id: number;
@@ -49,10 +50,14 @@ function InformationsGroupe() {
   const [nom_participants, set_nom_participants] = useState<NomParticipant[]>(
     []
   );
+  const [participant_actuel, set_participant_actuel] =
+    useState<ParticipantGroupe | null>(null);
 
   const [chargement_groupe, set_chargement_groupe] = useState<boolean>(true);
   const [chargement_depenses, set_chargement_depenses] =
     useState<boolean>(true);
+
+  const [ajoute_depense, set_ajoute_depense] = useState<boolean>(false);
 
   useEffect(() => {
     set_chargement_groupe(true);
@@ -101,15 +106,25 @@ function InformationsGroupe() {
   }, []);
 
   useEffect(() => {
-    if (participants_groupe.length > 0)
+    if (participants_groupe.length > 0) {
       set_nom_participants(calculer_nom_participant());
+      set_participant_actuel(
+        participants_groupe.find(
+          (participant: ParticipantGroupe) =>
+            participant.fk_utilisateur_id ===
+            authentification?.authentification.utilisateur?.pk_utilisateur_id
+        ) ?? null
+      );
+    }
   }, [utilisateurs, participants_groupe]);
 
   useEffect(() => {
-    set_total_depense(depenses.reduce(
-      (somme: number, depense: Depense) =>
-        somme += depense.montant, 0
-    ))
+    set_total_depense(
+      depenses.reduce(
+        (somme: number, depense: Depense) => (somme += depense.montant),
+        0
+      )
+    );
   }, [depenses]);
 
   const recuperer_groupe_api = async (): Promise<Groupe | null> => {
@@ -239,6 +254,12 @@ function InformationsGroupe() {
     });
   };
 
+  const ajouter_depense = (depense: Depense, affiliations: AffiliationDepense[]): void => {
+    set_depenses([...depenses, depense]);
+    set_attribution_depenses([...attribution_depenses, ...affiliations]);
+    set_total_depense(total_depense + depense.montant);
+  };
+
   return (
     <>
       {chargement_groupe ? (
@@ -253,6 +274,21 @@ function InformationsGroupe() {
             </div>
           ) : (
             <div>
+              {ajoute_depense ? (
+                participant_actuel ? (
+                  <CreationDepense
+                    groupe_id={groupe.pk_groupe_id}
+                    annulation={() => set_ajoute_depense(false)}
+                    ajouter_depense={ajouter_depense}
+                    nom_participants={nom_participants}
+                    participant_actuel={participant_actuel}
+                  />
+                ) : (
+                  <p>Service de création suspendu</p>
+                )
+              ) : (
+                <></>
+              )}
               <div
                 style={{
                   display: "flex",
@@ -277,7 +313,12 @@ function InformationsGroupe() {
                     )}
                   </p>
                 </div>
-                <button className="full-button">Ajouter une dépense</button>
+                <button
+                  className="full-button"
+                  onClick={() => set_ajoute_depense(true)}
+                >
+                  Ajouter une dépense
+                </button>
               </div>
               {chargement_depenses ? (
                 <LoaderCenter message="Récupération des dépenses" />
@@ -291,16 +332,15 @@ function InformationsGroupe() {
                     affiliations={attribution_depenses}
                   />
                   <div style={{ margin: "0 20px" }}>
-                    {
-                      nom_participants.length > 0 ?
+                    {nom_participants.length > 0 ? (
                       <GraphiqueDepense
                         nom_participants={nom_participants}
                         depenses={depenses}
                         affiliations={attribution_depenses}
-                      /> :
+                      />
+                    ) : (
                       <LoaderCenter message="Chargement du nom des participants" />
-                    }
-                    
+                    )}
                   </div>
                 </div>
               )}
