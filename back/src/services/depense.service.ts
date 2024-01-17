@@ -12,6 +12,16 @@ export const recuperer_toutes_depenses = async (groupe_id: number): Promise<Depe
     return result;
 }
 
+export const recuperer_depense_par_id = async (depense_id: number): Promise<Depense | null> => {
+    const result: Depense | null = await prisma.depense.findUnique({
+        where: {
+            pk_depense_id: depense_id
+        }
+    });
+
+    return result;
+}
+
 export const creer_depense = async (groupe_id: number, participant_createur: number, titre: string, montant: number): Promise<Depense> => {
     const result: Depense = await prisma.depense.create({
         data: {
@@ -25,10 +35,50 @@ export const creer_depense = async (groupe_id: number, participant_createur: num
     return result;
 }
 
+export const supprimer_depense = async (depense_id: number): Promise<void> => {
+    await prisma.participant_Groupe_Liee_Depense.deleteMany({
+        where: {
+            fk_depense_id: depense_id
+        }
+    });
+    await prisma.depense.update({
+        where: {
+          pk_depense_id: depense_id,
+        },
+        data: {
+          tags: {
+            set: []
+          },
+        },
+      });
+    await prisma.depense.delete({
+        where: {
+            pk_depense_id: depense_id
+        }
+    });
+}
+
 export const recuperer_tous_tags = async (): Promise<Tag[]> => {
     const result: Tag[] = await prisma.tag.findMany();
 
     return result;
+}
+
+export const recuperer_tous_tags_depenses = async (groupe_id: number): Promise<{ fk_depense_id: number, fk_tag_id: number }[]> => {
+    const result: Depense[] = await prisma.depense.findMany({
+        where: {
+          fk_groupe_id: groupe_id
+        },
+        include: {
+            tags: true
+        }
+      });
+
+    return result.map((depense: Depense) => (
+        depense['tags'].map((tag: Tag) => (
+            { fk_depense_id: depense.pk_depense_id, fk_tag_id: tag.pk_tag_id }
+        )))
+    ).flat();
 }
 
 export const recuperer_tous_utilisateur = async (groupe_id: number): Promise<Utilisateur[]> => {

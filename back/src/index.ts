@@ -31,5 +31,5 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.listen(process.env.PORT_SERVEUR, () => {
-    console.log(`The application is listening on http://localhost:${process.env.PORT_SERVEUR} !`);
+    console.log(`The application is listening on ${process.env.API_URL} !`);
 })

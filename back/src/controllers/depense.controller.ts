@@ -256,6 +256,88 @@ export const recuperer_tous_tags: RequestHandler = async (req: Request, res: Res
     }
 }
 
+export const recuperer_tous_tags_depenses: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+    const { groupe_id_param } = req.params;
+
+    if (!["string"].includes(typeof groupe_id_param) || groupe_id_param == "")
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "groupe_id", type: "string", facultatif: false }
+            ]
+        });
+
+    if (isNaN(Number(groupe_id_param)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le groupe_id_param doit être un nombre."
+        });
+
+    const groupe_id: number = Number(groupe_id_param);
+    
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe partagé n'existe pas."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des informations du groupe.",
+            erreur: error
+        });
+    }
+
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
+
+        if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Vous n'êtes pas affilié à ce groupe."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+            erreur: error
+        });
+    }
+
+    try {
+        const tags: { fk_depense_id: number, fk_tag_id: number }[] = await depense_service.recuperer_tous_tags_depenses(groupe_id);
+
+        return res.status(http_response_util.statuts.succes.ok).json({
+            message: "Les tags ont été récupérées avec succès.",
+            data: tags
+        });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des tags du groupe partagé.",
+            erreur: error
+        });
+    }
+}
+
 export const recuperer_tous_utilisateur: RequestHandler = async (req: Request, res: Response) => {
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;
@@ -403,20 +485,18 @@ export const recuperer_toutes_affiliations_depenses: RequestHandler = async (req
         });
     }
 
-    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id) {
-        try {
-            const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_id);
 
-            if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
-                return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
-                    message: "Vous n'êtes pas affilié à ce groupe."
-                });
-        } catch (error: PrismaClientKnownRequestError | any) {
-            return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
-                message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
-                erreur: error
+        if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Vous n'êtes pas affilié à ce groupe."
             });
-        }
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+            erreur: error
+        });
     }
 
     try {
@@ -429,6 +509,104 @@ export const recuperer_toutes_affiliations_depenses: RequestHandler = async (req
     } catch (error: PrismaClientKnownRequestError | any) {
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
             message: "Une erreur serveur est survenue lors de la récupération des affiliations des dépenses du groupe partagé.",
+            erreur: error
+        });
+    }
+}
+
+export const supprimer_depense: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const { depense_id_param } = req.params;
+
+    if (!["string"].includes(typeof depense_id_param) || depense_id_param == "")
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "depense_id_param", type: "string", facultatif: false }
+            ]
+        });
+
+    if (isNaN(Number(depense_id_param)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "La depense_id_param doit être un nombre."
+        });
+
+    const depense_id: number = Number(depense_id_param);
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let depense_existant: Depense | null = null;
+
+    try {
+        depense_existant = await depense_service.recuperer_depense_par_id(depense_id);
+
+        if (!depense_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "La dépense n'existe pas."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération de la dépense.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(depense_existant.fk_groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe partagé n'existe pas."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des informations du groupe.",
+            erreur: error
+        });
+    }
+
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(depense_existant.fk_groupe_id);
+
+        if (!participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id && participant.quitte_le == null))
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Vous n'êtes pas affilié à ce groupe."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+            erreur: error
+        });
+    }
+
+    try {
+        await depense_service.supprimer_depense(depense_id);
+
+        return res.status(http_response_util.statuts.succes.ok).json({
+            message: "La dépense a été supprimée avec succès."
+        });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la suppression de la dépense.",
             erreur: error
         });
     }
