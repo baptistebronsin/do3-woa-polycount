@@ -78,7 +78,21 @@
     background-color: white;
 }
 
-.light-button:hover, .full-button:hover {
+.delete-button {
+    border: 1px solid #FF0000;
+    color: #FF0000;
+    padding: 10px 28px;
+    border-radius: 10px;
+    background-color: white;
+    transition: background-color 0.5s ease; /* Animation sur 0.5 secondes */
+}
+
+.delete-button:hover {
+    background-color: #FF0000; /* Couleur de fond rouge au survol */
+    color: white; /* Change la couleur du texte au survol si nécessaire */
+}
+
+.light-button:hover, .full-button:hover, .delete-button:hover {
     cursor: pointer;
 }
 
@@ -94,4 +108,11 @@ nav {
 
 nav p {
     margin-right: 10px;
+}
+
+.img-80 {
+    height: 80px;
+    width: 80px;
+    object-fit: cover;
+    border-radius: 6px;
 }

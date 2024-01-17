@@ -29,21 +29,21 @@ function Navigation() {
     return (
         <>
             <nav>
-                <img onClick={() => navigate('/home/groupes')} alt="Logo Polycount" src="https://polytech.baptistebronsin.be/polycount/logo_polycount.png" style={{ height: '50px', borderRadius: '6px', margin: '10px', marginBottom: '0' }}/>
+                <img onClick={() => navigate('/home/groupes')} alt="Logo Polycount" src="https://polytech.baptistebronsin.be/polycount/logo_polycount.png" style={{ height: '50px', borderRadius: '6px', margin: '10px', marginBottom: '0' }} className="hover" />
                 <div>
-                    <p onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>{ authentification?.authentification.utilisateur?.prenom } { authentification?.authentification.utilisateur?.nom.toUpperCase() }&nbsp;<FontAwesomeIcon icon={faUser} style={{color: "#4b7bb4"}} /></p>
+                    <p className="hover" onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>{ authentification?.authentification.utilisateur?.prenom } { authentification?.authentification.utilisateur?.nom.toUpperCase() }&nbsp;<FontAwesomeIcon icon={faUser} style={{color: "#4b7bb4"}} /></p>
                 </div>
             </nav>
             {
                 afficher_compte ?
                 <div style={{ position: 'absolute', top: '40px', right: '10px', zIndex: 8 }} onMouseEnter={() => set_afficher_compte(true)} onMouseLeave={() => set_afficher_compte(false)}>
-                    <div style={{ marginTop: '10px', background: 'white', padding: '10px', borderRadius: '6px' }}>
+                    <div style={{ marginTop: '10px', background: 'white', padding: '10px', borderRadius: '6px', boxShadow: '0 0 4px 4px grey' }}>
                         <p>Mon compte</p>
                         <hr style={{ margin: '10px 0' }} />
                         <ul>
                             {
-                                options_compte.map((option) => (
-                                    <li><Link to={option.redirection}>{option.label}</Link></li>
+                                options_compte.map((option, index: number) => (
+                                    <li key={ index }><Link to={option.redirection}>{option.label}</Link></li>
                                 ))
                             }
                         </ul>

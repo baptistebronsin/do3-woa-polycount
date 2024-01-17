@@ -2,12 +2,8 @@ function Selecteur({ label, options, valeur_defaut, changement }: SelecteurProps
     return (
       <div className="selecteur-container">
         <label>{label}</label>
-        <select onChange={(e: any) => changement(e.target.value)}>
+        <select onChange={(e: any) => changement(e.target.value)} defaultValue={valeur_defaut ?? options[0].value}>
           {options.map(option => (
-            valeur_defaut && valeur_defaut === option.value ?
-            <option value={option.value} key={option.value} selected>
-              {option.label}
-            </option> :
             <option value={option.value} key={option.value}>
               {option.label}
             </option>

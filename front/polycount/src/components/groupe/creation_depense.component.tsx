@@ -28,38 +28,45 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
     const [chargement, set_chargement] = useState<boolean>(false);
     const [message_erreur, set_message_erreur] = useState<string | null>(null);
 
+    // Affiche les options du sélecteur de participants
     useEffect(() => {
         set_participants_selecteur([{ pk_participant_id: -1, nom: "Veuillez sectionner un participant" }, ...[...nom_participants].filter((p: NomParticipant) => p.pk_participant_id != participant_actuel.pk_participant_groupe_id)]);
     }, [nom_participants]);
 
+    // On recalcule le montant partagé si le montant global ou un montant personnalisé est modifié
     useEffect(() => {
-        if (montant > 0) {
-            const montant_partage: number = (montant - Object.keys(montants_partages).reduce((sum: number, key: string) => sum + montants_partages[key], 0)) / (participants.length + 1 - Object.keys(montants_partages).filter((key: string) => montants_partages[key] > 0).length);
-            const montant_partage_arrondi: number = Math.round(montant_partage * 100) / 100;
-            set_montant_partage_null(montant_partage_arrondi);
-        } else if (montant == 0) {
-            set_montant_partage_null(0);
-        }
+        calculer_montant_partage(montants_partages);
     }, [montant, montants_partages]);
 
+    // On recalcule le montant partagé si un participant est ajouté ou supprimé
     useEffect(() => {
-        let struct: any = {};
+        let struct: any = {...montants_partages};
         Object.keys(montants_partages).map((key: string) => {
-            if (!participants.find((p: NomParticipant) => p.pk_participant_id == parseInt(key))) {
-                struct = {...montants_partages};
+            if (!participants.find((p: NomParticipant) => p.pk_participant_id == parseInt(key)) && participant_actuel.pk_participant_groupe_id !== parseInt(key)) {
                 delete struct[key];
-                set_montants_partages({ ...struct });
             }
         });
 
+        set_montants_partages(struct);
+
+        calculer_montant_partage(struct);
+    }, [participants]);
+
+    // Efface le message d'erreur si le nom de la dépense ou le montant est modifié
+    useEffect(() => {
+        set_message_erreur(null);
+    }, [nom_depense, montant]);
+
+    const calculer_montant_partage = (montants: { [key: string]: number }) => {
         if (montant > 0) {
-            const montant_partage: number = (montant - Object.keys(struct).reduce((sum: number, key: string) => sum + struct[key], 0)) / (participants.length + 1 - Object.keys(struct).filter((key: string) => struct[key] > 0).length);
+            const montant_partage: number = (montant - Object.keys(montants).reduce((sum: number, key: string) => sum + montants[key], 0)) / (participants.length + 1 - Object.keys(montants).filter((key: string) => montants[key] > 0).length);
             const montant_partage_arrondi: number = Math.round(montant_partage * 100) / 100;
+
             set_montant_partage_null(montant_partage_arrondi);
         } else if (montant == 0) {
             set_montant_partage_null(0);
         }
-    }, [participants]);
+    }
 
     const ajouter_participant_depuis_selecteur = (id: string) => {
         const participant: NomParticipant | undefined = nom_participants.filter((p: NomParticipant) => p.pk_participant_id == parseInt(id))[0];
@@ -116,6 +123,11 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             return null;
         }
 
+        if (Object.keys(montants_partages).reduce((sum: number, key: string) => sum + montants_partages[key], 0) < montant && Object.keys(montants_partages).length == participants.length + 1) {
+            set_message_erreur("La somme des montants des participants est inférieur au montant de la dépense.");
+            return null;
+        }
+
         const participants_affiliations = [...participants.map(
             (p: NomParticipant) => ({ fk_participant_groupe_id: p.pk_participant_id, montant: montants_partages[p.pk_participant_id+""] ?? null })
         ), { fk_participant_groupe_id: participant_actuel.pk_participant_groupe_id, montant: montants_partages[participant_actuel.pk_participant_groupe_id+""] ?? null }];
@@ -139,14 +151,14 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             else
                 toast.success("La dépense a bien été créée.");
 
-            ajouter_depense(Depense.from_JSON(reponse.data.data), participants_affiliations.filter((p: any) => p.montant != null).map((p: any) => ({ fk_participant_groupe_id: p.fk_participant_groupe_id, fk_depense_id: reponse.data.data.pk_depense_id, montant: p.montant })));
+            ajouter_depense(Depense.from_JSON(reponse.data.data), participants_affiliations.map((p: any) => ({ fk_participant_groupe_id: p.fk_participant_groupe_id, fk_depense_id: reponse.data.data.pk_depense_id, montant: p.montant })));
             annulation(false);
         }
      }
 
     return (
-        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(10, 10, 10, 0.3)', zIndex: 9 }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '500px' : '470px', zIndex: 10, padding: "10px 20px", borderRadius: '10px' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(128, 128, 128, 0.8)', zIndex: 9 }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '500px' : '470px', zIndex: 10, padding: "10px 20px", borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <h1>Création d'une dépense</h1>
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -186,7 +198,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
                                     <p>{ authentification ? authentification.authentification.utilisateur?.prenom + " " + authentification.authentification.utilisateur?.nom[0] + "." : "Participant n°" + participant_actuel.pk_participant_groupe_id }</p>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                            <TextInput type="number" label="montant personnalisé" value={null} placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[participant_actuel.pk_participant_groupe_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
+                                            <TextInput type="number" label="montant personnalisé" placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[participant_actuel.pk_participant_groupe_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
                                         </div>
                                         <FontAwesomeIcon icon={faTrashCan} style={{ color: 'white' }}/>
                                     </div>
@@ -197,7 +209,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
                                             <p>{ p.nom ?? "participant n°" + p.pk_participant_id }</p>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                                    <TextInput type="number" label="montant personnalisé" value={null} placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[p.pk_participant_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
+                                                    <TextInput type="number" label="montant personnalisé"  placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[p.pk_participant_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
                                                 </div>
                                                 <FontAwesomeIcon icon={faTrashCan} style={{ color: 'red' }} onClick={() => supprimer_participant_depuis_selecteur(p.pk_participant_id)} className="hover" />
                                             </div>
