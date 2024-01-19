@@ -1,4 +1,4 @@
-import { Groupe, Participant_Groupe, PrismaClient, Utilisateur } from "@prisma/client";
+import { Groupe, Participant_Groupe, PrismaClient } from "@prisma/client";
 
 const prisma: PrismaClient = new PrismaClient();
 
@@ -55,7 +55,7 @@ export const ajouter_participant = async (groupe_id: number, utilisateur_id: num
             peut_modifier_montant_max_depense: true,
             peut_supprimer_depense: true,
             montant_max_depense: null,
-            rejoint_le: utilisateur_id ? new Date() : null
+            rejoint_le: null
         }
     });
 

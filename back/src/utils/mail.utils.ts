@@ -39,6 +39,11 @@ export const contenu: {
         entete: "Réactivation de votre compte",
         contenu: "<p>Bonjour $_GENRE_$ $_NOM_$,</p><p>Bon retour parmis nous !</p><p>La réactivation de votre compte entraîne l'annulation de la procédure de suppression de vos informations.</p>",
         signature: "<p>Bien cordialement,<br>Le service Polycount</p>",
+    },
+    mail_invitation_groupe: {
+        entete: "Invitation à rejoindre un groupe Polycount",
+        contenu: "<p>Bonjour $_GENRE_$ $_NOM_$,</p><p>Vous êtes invités à rejoindre le groupe de dépense Polycount <strong>$_NOM_GROUPE_$</strong> de $_PRENOM_INVITEUR_$ $_NOM_INVITEUR_$.</p><p>Veuillez trouver ci-dessous un bouton pour rejoindre ce groupe :</p><div style='text-align: center; margin: 40px 0;'><a href='$_URL_TOKEN_$' style='background-color: #4a7ab4; padding: 10px; border-radius: 10px; margin: 0 auto; color: white; text-decoration: none;'>Rejoindre le groupe</a></div><p>Ce bouton possède une durée de validité de <span style='font-weight: bold; text-decoration: underline;'>$_TEMPS_VALIDITE_TOKEN_$ heures</span> à compter de la réception de ce mail.</p><p>Dans le cas où vous ne souhaitez pas rejoindre ce groupe, veuillez ne pas prendre en compte ce mail.</p>",
+        signature: "<p>Bien cordialement,<br>Le service Polycount</p>",
     }
 };
 
