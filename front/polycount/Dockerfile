@@ -22,3 +22,6 @@ COPY --chown=nginx:nginx nginx.conf /etc/nginx/nginx.conf
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
+
+# docker build -t baraly/polycount-front:0.1.1 .
+# docker run -p 81:8080 -it baraly/polycount-front:0.1.1

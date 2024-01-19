@@ -28,5 +28,5 @@ COPY --from=base /express-docker/package.json ./package.json
 # Starting our application
 CMD ["node", "dist/index.js"]
 
-# docker build -t polycount-back:1.0 .
-# docker run -dp 8080:8080 polycount-back:1.0
+# docker build -t baraly/polycount-back:0.1.0 .
+# docker run -dp 8080:8080 polycount-back:0.1.0
