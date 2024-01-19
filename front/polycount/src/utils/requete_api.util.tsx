@@ -37,6 +37,7 @@ const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", 
 
         return reponse;
     } catch (erreur) {
+        console.log(erreur);
         if (erreur instanceof AxiosError) {
             if (!afficher_erreur)
                 return erreur;

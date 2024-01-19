@@ -172,7 +172,7 @@ function InformationsGroupe() {
                 section_selectionnee == 0 ?
                 <InformationDepense groupe={ groupe } participant_actuel={ participant_actuel } nom_participants={ nom_participants } /> : 
                 section_selectionnee == 1 ?
-                <InformationParticipant groupe={ groupe } participants={ participants_groupe } utilisateurs={ utilisateurs }  nom_participants={ nom_participants } participant_actuel={ participant_actuel } /> :
+                <InformationParticipant groupe={ groupe } participants={ participants_groupe } utilisateurs={ utilisateurs }  nom_participants={ nom_participants } participant_actuel={ participant_actuel } ajouter_participant={ (p: ParticipantGroupe) => set_participants_groupe([...participants_groupe, p]) } ajouter_utilisateur={ (u: Utilisateur) => set_utilisateurs([...utilisateurs, u]) } /> :
                 <ReglageGroupe />
               }
             </div>

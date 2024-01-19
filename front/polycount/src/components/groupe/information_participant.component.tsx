@@ -16,21 +16,21 @@ import { NavigateFunction, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import LoaderSpinner from "../loader/loader_spinner.component";
 
-function InformationParticipant ({ groupe, participants, utilisateurs, nom_participants, participant_actuel }: { groupe: Groupe, participants: ParticipantGroupe[], utilisateurs: Utilisateur[], nom_participants: NomParticipant[], participant_actuel: ParticipantGroupe }) {
+function InformationParticipant ({ groupe, participants, utilisateurs, nom_participants, participant_actuel, ajouter_participant, ajouter_utilisateur }: { groupe: Groupe, participants: ParticipantGroupe[], utilisateurs: Utilisateur[], nom_participants: NomParticipant[], participant_actuel: ParticipantGroupe, ajouter_participant: Function, ajouter_utilisateur: Function }) {
     const navigate: NavigateFunction = useNavigate();
     const authentification: AuthContextType | null = useAuth();
 
-    const [ajouter_participant, set_ajouter_participant] = useState<boolean>(false);
+    const [ajouter_participant_action, set_ajouter_participant_action] = useState<boolean>(false);
 
     return (
         <div style={{ margin: '10px 20px' }}>
             {
-                ajouter_participant ?
-                <AjouterParticipant groupe={ groupe } participant_actuel={ participant_actuel } annulation={() => set_ajouter_participant(false)} authentification={ authentification } navigate={ navigate } />: <></>
+                ajouter_participant_action ?
+                <AjouterParticipant groupe={ groupe } participant_actuel={ participant_actuel } annulation={() => set_ajouter_participant_action(false)} authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } ajouter_utilisateur={ ajouter_utilisateur } />: <></>
             }
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <p>Informations sur les participants</p>
-                <button className="full-button" onClick={ participant_actuel.fk_utilisateur_id === groupe.fk_utilisateur_createur_id ? () => set_ajouter_participant(true) : () => {} }>Ajouter un participant</button>
+                <button className="full-button" onClick={ () => set_ajouter_participant_action(true) }>Ajouter un participant</button>
             </div>
             <div>
                 {
@@ -85,7 +85,7 @@ function InformationParticipant ({ groupe, participants, utilisateurs, nom_parti
     );
 }
 
-function AjouterParticipant ({ groupe, participant_actuel, annulation, authentification, navigate }: { groupe: Groupe, participant_actuel: ParticipantGroupe, annulation: Function, authentification: AuthContextType | null, navigate: NavigateFunction }) {
+function AjouterParticipant ({ groupe, participant_actuel, annulation, authentification, navigate, ajouter_participant, ajouter_utilisateur }: { groupe: Groupe, participant_actuel: ParticipantGroupe, annulation: Function, authentification: AuthContextType | null, navigate: NavigateFunction, ajouter_participant: Function, ajouter_utilisateur: Function }) {
     const [type_ajout, set_type_ajout] = useState<number>(1);
 
     const types_ajout: { valeur: number, label: string }[] = [{ valeur: 1, label: 'Email' }, { valeur: 2, label: 'Lien' }, { valeur: 3, label: 'Fictif'}];
@@ -105,9 +105,9 @@ function AjouterParticipant ({ groupe, participant_actuel, annulation, authentif
                         </div>
                         {
                             type_ajout === 1 ?
-                            <Ajout_Email groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ () => {} } ajouter_utilisateur={ () => {} } />:
+                            <Ajout_Email groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } ajouter_utilisateur={ ajouter_utilisateur } />:
                             type_ajout === 2 ?
-                            <Ajout_Lien />:
+                            <Ajout_Lien groupe={ groupe } authentification={ authentification } navigate={ navigate } />:
                             <Ajout_Fictif />
                         }
                     </div>:
@@ -193,8 +193,27 @@ function Ajout_Email ({ groupe, authentification, navigate, ajouter_participant,
     );
 }
 
-function Ajout_Lien () {
+function Ajout_Lien ({ groupe, authentification, navigate }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction }) {
     const [lien, set_lien] = useState<{ url: string, temps_valide: number } | undefined>(undefined);
+
+    const [chargement, set_chargement] = useState<boolean>(false);
+
+    const generer_lien_api = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        const api_body: any = {
+            groupe_id: groupe.pk_groupe_id
+        };
+
+        set_chargement(true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/groupe/participant/lien", api_body, authentification, navigate, true);
+        set_chargement(false);
+
+        if (reponse && 'data' in reponse && 'data' in reponse.data) {
+            const data_response: { url: string, temps_valide: number } = reponse.data.data;
+            set_lien(data_response);
+        }
+    }
 
     return (
         <div>
@@ -202,18 +221,31 @@ function Ajout_Lien () {
             <div style={{ height: '30px' }}></div>
             {
                 lien === undefined ?
-                <div className="centre">
-                    <button className="full-button">Générer un lien</button>
-                </div> :
-                <>
-                <div className="centre">
-                    <p style={{ width: '50%', border: '1px solid grey', borderRadius: '10px', padding: '6px 14px' }}>{ lien.url }</p>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyItems: 'center' }}>
+                    <div className="centre">
+                        <p style={{ width: '50%', border: '1px solid grey', borderRadius: '10px', padding: '6px 14px', color: 'grey', textAlign: 'center' }}>Aucun lien</p>
+                    </div>
+                    <div style={{ height: '30px' }}></div>
+                    <div className="centre">
+                    {
+                        chargement ?
+                        <button className="full-button centre-centre" onClick={() => {}}>
+                            <LoaderSpinner />
+                            <p className="inline-block">&nbsp;Génération en cours</p>
+                        </button> :
+                        <button className="full-button" onClick={ generer_lien_api }>Générer un lien</button>
+                    }
+                    </div> 
+                </div>:
+                <div style={{ display: 'flex', flexDirection: 'column', justifyItems: 'center' }}>
+                    <div className="centre">
+                        <p style={{ width: '50%', border: '1px solid grey', borderRadius: '10px', padding: '6px 14px', whiteSpace: 'nowrap', overflow: 'auto' }}>{ lien.url }</p>
+                    </div>
+                    <div style={{ height: '30px' }}></div>
+                    <div className="centre">
+                        <p>Ce lien possède une durée de validité de <span style={{ fontWeight: 'bold' }}>{ lien.temps_valide } heures</span>.</p>
+                    </div>
                 </div>
-                <div style={{ height: '30px' }}></div>
-                <div className="centre">
-                    <p>Ce lien possède une durée de validité de <span style={{ fontWeight: 'bold' }}>{ lien.temps_valide } heures</span>.</p>
-                </div>
-                </>
             }
         </div>
     );

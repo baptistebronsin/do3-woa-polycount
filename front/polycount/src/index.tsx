@@ -18,6 +18,7 @@ import { AuthProvider } from './providers/authentification.provider';
 import ProtectedRoute from './routes/protected.route';
 import HomeRoute from './routes/home.route';
 import SuspensionPage from './pages/authentification/suspension.page';
+import InvitationGroupe from './pages/home/groupes/invitation_groupe.page';
 
 ReactDOM.render(
   <AuthProvider>
@@ -30,6 +31,7 @@ ReactDOM.render(
           <Route path='/mot-de-passe-oublie' element={ <IndexMotDePasseOublie /> } />
           <Route path='/verification-compte' element={ <Verification /> } />
           <Route path='/suspension' element={ <SuspensionPage /> } />
+          <Route path='/invitation-groupe' element={ <InvitationGroupe /> } />
           
           <Route path='/home/*' element={ <ProtectedRoute><HomeRoute /></ProtectedRoute> } />
         </Routes>
