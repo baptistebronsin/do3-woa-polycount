@@ -7,7 +7,10 @@ export const recuperer_tous_groupes = async (utilisateur_id: number): Promise<Gr
         where: {
             participants: {
               some: {
-                fk_utilisateur_id: utilisateur_id
+                fk_utilisateur_id: utilisateur_id,
+                rejoint_le: {
+                  not: null
+                }
               }
             }
           },
@@ -43,7 +46,7 @@ export const creer_groupe = async (nom: string, description: string | null, util
     return result;
 }
 
-export const ajouter_participant = async (groupe_id: number, utilisateur_id: number | null, nom: string | null): Promise<Participant_Groupe> => {
+export const ajouter_participant = async (groupe_id: number, utilisateur_id: number | null, nom: string | null, date_rejoint: Date | null): Promise<Participant_Groupe> => {
     const result: Participant_Groupe = await prisma.participant_Groupe.create({
         data: {
             fk_utilisateur_id: utilisateur_id,
@@ -55,7 +58,7 @@ export const ajouter_participant = async (groupe_id: number, utilisateur_id: num
             peut_modifier_montant_max_depense: true,
             peut_supprimer_depense: true,
             montant_max_depense: null,
-            rejoint_le: null
+            rejoint_le: date_rejoint
         }
     });
 
@@ -66,6 +69,29 @@ export const recuperer_participants = async (groupe_id: number): Promise<Partici
     const result: Participant_Groupe[] = await prisma.participant_Groupe.findMany({
         where: {
             fk_groupe_id: groupe_id
+        }
+    });
+
+    return result;
+}
+
+export const recuperer_participant = async (participant_id: number): Promise<Participant_Groupe> => {
+    const result: Participant_Groupe = await prisma.participant_Groupe.findUnique({
+        where: {
+            pk_participant_groupe_id: participant_id
+        }
+    });
+
+    return result;
+}
+
+export const rejoindre_groupe = async (participant_id: number): Promise<Participant_Groupe> => {
+    const result: Participant_Groupe = await prisma.participant_Groupe.update({
+        where: {
+            pk_participant_groupe_id: participant_id
+        },
+        data: {
+            rejoint_le: new Date()
         }
     });
 
