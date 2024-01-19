@@ -7,6 +7,7 @@ import './assets/css/selecteur.css';
 import './assets/css/text_area_input.css'
 import './assets/css/carte_groupe.css';
 import './assets/css/carte_depense.css';
+import './assets/css/selecteur_dynamique.css'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Inscription from './pages/authentification/inscription.page';
 import Connexion from './pages/authentification/connexion.page';

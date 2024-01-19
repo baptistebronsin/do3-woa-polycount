@@ -58,6 +58,20 @@
     color: #4B7BB4;
 }
 
+.lien-block {
+    color: #4B7BB4;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+}
+
+.lien-block:hover {
+    cursor: pointer;
+    padding: 4px 10px;
+    background-color: rgba(75, 123, 180, 0.06);
+    border: 1px solid #4B7BB4;
+    border-radius: 6px;
+}
+
 .lien:hover {
     cursor: pointer;
     text-decoration: underline;

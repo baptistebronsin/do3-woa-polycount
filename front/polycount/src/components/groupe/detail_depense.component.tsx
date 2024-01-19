@@ -75,11 +75,14 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                 }
             </div>
             <div>
+            {
+                est_modification ?
+                <div></div> :
                 <div>
-                    <p>Montant : <span>{ depense.montant.toFixed(2) } €</span></p>
-                    <p>Payé par : <span>{ participant_createur ? participant_createur.nom : "Participant inconnu" }</span></p>
+                    <p style={{ color: 'grey' }}>Montant : <span style={{ color: 'black' }}>{ depense.montant.toFixed(2) } €</span></p>
+                    <p style={{ color: 'grey' }}>Payé par : <span style={{ color: 'black' }}>{ participant_createur ? participant_createur.nom : "Participant inconnu" }</span></p>
                     <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                        <p>Tags : </p>
+                        <p style={{ color: 'grey' }}>Tags : </p>
                         <div style={{ display: 'flex', gap: '10px' }}>
                         {
                             attribution_tags.length == 0 ?
@@ -99,7 +102,7 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                     <div style={{ height: '20px' }}></div>
                     <div>
                         <p>Participants : </p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div style={{ float: 'left', height: '100%', overflow: 'auto' }}>
                         {
                             nom_participants.map((nom_participant: NomParticipant) => {
                                 const participant_trouve: AffiliationDepense | undefined = affiliations.find(
@@ -107,13 +110,14 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                                 );
 
                                 if (participant_trouve != undefined) {
-                                    return <p>{ nom_participants.find((p: NomParticipant) => p.pk_participant_id === participant_trouve.fk_participant_groupe_id)!.nom }</p>
+                                    return <DetailDepenseParticipant participant_id={ participant_trouve.fk_participant_groupe_id } depense={ depense } nom_participant={ nom_participant } affiliations={ affiliations } />
                                 }
                             })
                         }
                         </div>
                     </div>
                 </div>
+            }
             </div>
             <div className="centre">
                 {
@@ -124,6 +128,22 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                     </button> :
                     <button className="delete-button" onClick={ supprimer_depense_api }>Supprimer la dépense</button>
                 }
+            </div>
+        </div>
+    );
+}
+
+function DetailDepenseParticipant ({ participant_id, depense, nom_participant, affiliations }: { participant_id: number, depense: Depense, nom_participant: NomParticipant, affiliations: AffiliationDepense[] }) {
+    const affiliation: AffiliationDepense | undefined = affiliations.find((affiliation: AffiliationDepense) => affiliation.fk_participant_groupe_id === participant_id && affiliation.fk_depense_id === depense.pk_depense_id);
+
+    const montant_calcule: number = (depense.montant - affiliations.filter((a: AffiliationDepense) => a.fk_depense_id === depense.pk_depense_id && a.montant != null).reduce((somme: number, a: AffiliationDepense) => somme += (a.montant ?? 0), 0)) / (affiliations.filter((a: AffiliationDepense) => a.fk_depense_id === depense.pk_depense_id && a.montant == null).length);
+    const montant_affiliation: string = affiliation && affiliation.montant != null ? affiliation.montant.toFixed(2) : montant_calcule.toFixed(2);
+
+    return (
+        <div style={{ display: 'inline-block', margin: '5px 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '2px solid #4B7BB4', borderRadius: '8px', padding: '6px 14px', gap: '20px' }}>
+                <p>{ nom_participant.nom }</p>
+                <p style={{ color: '#4B7BB4', fontWeight: 'bold' }}>{ montant_affiliation } €</p>
             </div>
         </div>
     );

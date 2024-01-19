@@ -1,0 +1,31 @@
+.selecteur-dynamique {
+    background-color: #F1F5F9;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.selecteur-dynamique .container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.selecteur-dynamique .element {
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.selecteur-dynamique .element-actif {
+    background-color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.selecteur-dynamique .element:hover {
+    background-color: rgb(230, 229, 229);
+}
