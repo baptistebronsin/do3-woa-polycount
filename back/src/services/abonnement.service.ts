@@ -1,6 +1,5 @@
-import { Abonnement, Caracteristique_Abonnement, Code_Reduction, Offre_Speciale, PrismaClient, Souscription_Abonnement } from "@prisma/client";
-
-const prisma: PrismaClient = new PrismaClient()
+import { Abonnement, Caracteristique_Abonnement, Code_Reduction, Offre_Speciale, Souscription_Abonnement } from "@prisma/client";
+import prisma from "./prisma.service";
 
 export const ajouter_caracteristique_abonnement = async (nom: string, description: string | null, nombre_max_groupe: number | null, nombre_max_participant_par_groupe: number | null, nombre_max_depense_par_groupe: number | null, couleur_clair: string | null, couleur_sombre: string | null, stripe_product_id: string): Promise<Caracteristique_Abonnement> => {
     const result: Caracteristique_Abonnement = await prisma.caracteristique_Abonnement.create({

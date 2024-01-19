@@ -1,0 +1,54 @@
+services:
+  postgresql:
+    image: postgres:16
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "polycount"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - compose.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  back:
+    image: baraly/polycount-back:0.1.1
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    env_file:
+      - compose.env
+
+  front:
+    image: baraly/polycount-front:0.1.0
+    restart: always
+    depends_on:
+      - back
+
+  nginx:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - nginx_data:/data
+      - nginx_letsencrypt:/etc/letsencrypt
+
+
+volumes:
+  postgres_data:
+  nginx_data:
+  nginx_letsencrypt:
+
+# docker compose ps -- Liste les containeur en cours
+# docker compose up -d -- Lancer les containeur en détaché
+# docker compose pull -- Récupérer les nouvelles versions
+# docker compose down -- Arreter les containeurs en cours
+# docker compose restart [nom_containeur] -- Redémarrer un containeur
+# docker compose logs <-f> [nom_containeur] -- Voir les logs pour un containeur

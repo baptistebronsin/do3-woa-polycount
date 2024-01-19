@@ -1,17 +1,24 @@
-# Étape 1: Construire l'application
-FROM node:latest as build-step
+FROM node:20-alpine AS build
 
-WORKDIR /app
-COPY package.json ./
-RUN npm install
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm ci
+
 COPY . .
+
+ENV NODE_ENV="production"
+
 RUN npm run build
 
-# Étape 2: Servir l'application
-FROM nginx:alpine
-COPY --from=build-step /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+FROM nginxinc/nginx-unprivileged:alpine3.18
 
-# docker build -t polycount-front:1.0 .
-# docker run --name polycount-front -dp 80:3000 polycount-front:1.0
+RUN rm -rf /etc/nginx/html/*
+
+COPY --from=build --chown=nginx:nginx /usr/src/app/build /etc/nginx/html
+COPY --chown=nginx:nginx nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]

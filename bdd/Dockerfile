@@ -4,7 +4,7 @@ FROM postgres:latest
 # Définir les variables d'environnement pour la configuration de PostgreSQL
 ENV POSTGRES_DB='polycount'
 ENV POSTGRES_USER='bbronsin'
-ENV POSTGRES_PASSWORD='zUmKk3DE35YQK9NCh9Uxh@FnusABXELSHhj7SkX'
+ENV POSTGRES_PASSWORD='zUmKk3DE35YQK9NCh9UxhFnusABXELSHhj7SkX'
 
 # Ajouter des scripts de configuration ou des données initiales
 # COPY ./init.sql /docker-entrypoint-initdb.d/

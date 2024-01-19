@@ -1,6 +1,5 @@
-import { PrismaClient, Suspension, Token, Utilisateur } from '@prisma/client'
-
-const prisma: PrismaClient = new PrismaClient()
+import { Suspension, Token, Utilisateur } from '@prisma/client'
+import prisma from "./prisma.service";
 
 export const ajouter_utilisateur = async (nom: string, prenom: string, genre: string | null, email: string, mot_de_passe: string, stripe_id: string): Promise<Utilisateur> => {
     const result: Utilisateur = await prisma.utilisateur.create({

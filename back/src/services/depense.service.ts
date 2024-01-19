@@ -1,6 +1,5 @@
-import { Depense, Participant_Groupe, PrismaClient, Tag, Utilisateur, Participant_Groupe_Liee_Depense } from "@prisma/client";
-
-const prisma: PrismaClient = new PrismaClient();
+import { Depense, Participant_Groupe, Tag, Utilisateur, Participant_Groupe_Liee_Depense } from "@prisma/client";
+import prisma from "./prisma.service";
 
 export const recuperer_toutes_depenses = async (groupe_id: number): Promise<Depense[]> => {
     const result: Depense[] = await prisma.depense.findMany({

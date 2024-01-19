@@ -6,7 +6,7 @@ import deconnexion from "./deconnexion.util";
 import { AuthContextType } from "../providers/authentification.provider";
 
 const requete_api = async (method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, body: any, authentification: AuthContextType | null, navigate: NavigateFunction, afficher_erreur: boolean = true, second_essaie: boolean = false): Promise<AxiosResponse | AxiosError | null> => {
-    const api_url: string = "http://polycount.baptistebronsin.be:8080";
+    const api_url: string = process.env.NODE_ENV === "production" ? `https://api.${window.location.hostname}` : "http://localhost:8080";
 
     const headers: any = authentification ? { headers: { Authorization: `Bearer ${authentification.authentification.token}` }} : null;
 

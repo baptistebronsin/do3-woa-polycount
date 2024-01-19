@@ -1,6 +1,5 @@
-import { Groupe, Participant_Groupe, PrismaClient } from "@prisma/client";
-
-const prisma: PrismaClient = new PrismaClient();
+import { Groupe, Participant_Groupe } from "@prisma/client";
+import prisma from "./prisma.service";
 
 export const recuperer_tous_groupes = async (utilisateur_id: number): Promise<Groupe[]> => {
     const groupes_rejoint: Groupe[] = await prisma.groupe.findMany({
