@@ -64,6 +64,38 @@ export const ajouter_participant = async (groupe_id: number, utilisateur_id: num
     return result;
 }
 
+export const modifier_participant = async (participant_id: number, nom: string | null, peut_creer_depense: boolean, peut_modifier_depense: boolean, peut_supprimer_depense: boolean, peut_manipuler_tag: boolean, peut_modifier_montant_max_depense: boolean, montant_max_depense: number | null): Promise<Participant_Groupe> => {
+    const result: Participant_Groupe = await prisma.participant_Groupe.update({
+        data: {
+            nom: nom,
+            peut_creer_depense: peut_creer_depense, 
+            peut_modifier_depense: peut_modifier_depense,
+            peut_supprimer_depense: peut_supprimer_depense,
+            peut_manipuler_tag: peut_manipuler_tag,
+            peut_modifier_montant_max_depense: peut_modifier_montant_max_depense,
+            montant_max_depense: montant_max_depense
+        },
+        where: {
+            pk_participant_groupe_id: participant_id
+        }
+    });
+
+    return result;
+}
+
+export const quitter_participant = async (participant_id: number): Promise<Participant_Groupe> => {
+    const result: Participant_Groupe = await prisma.participant_Groupe.update({
+        data: {
+            quitte_le: new Date()
+        },
+        where: {
+            pk_participant_groupe_id: participant_id
+        }
+    });
+
+    return result;
+}
+
 export const recuperer_participants = async (groupe_id: number): Promise<Participant_Groupe[]> => {
     const result: Participant_Groupe[] = await prisma.participant_Groupe.findMany({
         where: {

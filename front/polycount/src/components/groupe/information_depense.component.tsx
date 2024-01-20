@@ -184,7 +184,7 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
               )}
             </div>
             {
-                depense_selectionnee != undefined ?
+                depense_selectionnee !== undefined ?
                 <div style={{ height: '47px' }}></div> :
                 <button
                 className="full-button"
@@ -202,7 +202,7 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
                   style={{ display: "grid", gridTemplateColumns: "30% auto" }}
                 >
                   {
-                    depenses.length == 0 ? (
+                    depenses.length === 0 ? (
                       <p className="centre-centre">Aucune dépense n'a été enregistrée.</p>
                     ) : (
                       <ListeDepenses

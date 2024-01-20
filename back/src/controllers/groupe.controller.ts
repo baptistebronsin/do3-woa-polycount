@@ -370,6 +370,233 @@ export const creer_participant_fictif: RequestHandler = async (req: Request, res
     });
 }
 
+export const modifier_participant: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const { participant_groupe_id, nom, peut_creer_depense, peut_modifier_depense, peut_supprimer_depense, peut_manipuler_tag, peut_modifier_montant_max_depense, montant_max_depense } = req.body;
+
+    if (!["number"].includes(typeof participant_groupe_id) || (nom != null && !["string"].includes(typeof nom)) || !["boolean"].includes(typeof peut_creer_depense) || !["boolean"].includes(typeof peut_modifier_depense) || !["boolean"].includes(typeof peut_supprimer_depense) || !["boolean"].includes(typeof peut_manipuler_tag) || !["boolean"].includes(typeof peut_modifier_montant_max_depense) || (montant_max_depense != null && !["number"].includes(typeof montant_max_depense)))
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "participant_groupe_id", type: "number", facultatif: false },
+                { nom: "nom", type: "string", facultatif: true },
+                { nom: "peut_creer_depense", type: "boolean", facultatif: false },
+                { nom: "peut_modifier_depense", type: "boolean", facultatif: false },
+                { nom: "peut_supprimer_depense", type: "boolean", facultatif: false },
+                { nom: "peut_manipuler_tag", type: "boolean", facultatif: false },
+                { nom: "peut_modifier_montant_max_depense", type: "boolean", facultatif: false },
+                { nom: "montant_max_depense", type: "number", facultatif: true }
+            ]
+        });
+
+    if (isNaN(Number(participant_groupe_id)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le participant_groupe_id doit être un nombre."
+        });
+
+    if (nom != null && nom.length > 30)
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le nom du participant ne doit pas faire plus de 30 caractères."
+        });
+
+    if (montant_max_depense != null && montant_max_depense < 0)
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le montant maximum de dépense doit être un nombre positif."
+        });
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let participant_existant: Participant_Groupe | null = null;
+
+    try {
+        participant_existant = await groupe_service.recuperer_participant(Number(participant_groupe_id));
+
+        if (!participant_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun participant trouvé."
+            }); 
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données du participant.",
+            erreur: error
+        });
+    }
+
+    if (nom == null && participant_existant.fk_utilisateur_id == null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Ce participant est fictif, vous devez renseigner un nom."
+        });
+
+    const nom_formate: string | null = participant_existant.fk_utilisateur_id ? null : nom;
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(participant_existant.fk_groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe du participant n'a pas été retrouvé."
+            }); 
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données du groupe du participant.",
+            erreur: error
+        });
+    }
+
+    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Seul l'administrateur du groupe partagé peut modifier les informations des participants de son groupe."
+        });
+
+    let participant_modifie: Participant_Groupe | null = null;
+
+    try {
+        participant_modifie = await groupe_service.modifier_participant(participant_existant.pk_participant_groupe_id, nom_formate, peut_creer_depense, peut_modifier_depense, peut_supprimer_depense, peut_manipuler_tag, peut_modifier_montant_max_depense, montant_max_depense);
+
+        if (!participant_modifie)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le participant n'a pas pu être modifié."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la modification des données du participant.",
+            erreur: error
+        });
+    }
+
+    return res.status(http_response_util.statuts.succes.accepte).json({
+        message: "Le participant a bien été modifié.",
+        data: {
+            ...participant_modifie,
+            rejoint_le: participant_modifie.rejoint_le ? moment(participant_modifie.rejoint_le).format(moment_date_time_format) : null,
+            quitte_le: participant_modifie.quitte_le ? moment(participant_modifie.quitte_le).format(moment_date_time_format) : null,
+        }
+    });
+}
+
+export const quitter_participant: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const { participant_groupe_id } = req.body;
+
+    if (!["number"].includes(typeof participant_groupe_id))
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "participant_groupe_id", type: "number", facultatif: false }
+            ]
+        });
+
+    if (isNaN(Number(participant_groupe_id)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le participant_groupe_id doit être un nombre."
+        });
+
+        let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let participant_existant: Participant_Groupe | null = null;
+
+    try {
+        participant_existant = await groupe_service.recuperer_participant(Number(participant_groupe_id));
+
+        if (!participant_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun participant trouvé."
+            }); 
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données du participant.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(participant_existant.fk_groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe du participant n'a pas été retrouvé."
+            }); 
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données du groupe du participant.",
+            erreur: error
+        });
+    }
+
+    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Seul l'administrateur du groupe partagé peut modifier les informations des participants de son groupe."
+        });
+
+    if (participant_existant.quitte_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Le participant a déjà quitté le groupe de dépense."
+        });
+
+    let participant_quitte: Participant_Groupe | null = null;
+
+    try {
+        participant_quitte = await groupe_service.quitter_participant(participant_existant.pk_participant_groupe_id);
+
+        if (!participant_quitte)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le participant n'a pas pu être modifié."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la modification des données du participant.",
+            erreur: error
+        });
+    }
+
+    return res.status(http_response_util.statuts.succes.accepte).json({
+        message: "Le participant a bien quitté le groupe.",
+        data: {
+            ...participant_quitte,
+            rejoint_le: participant_quitte.rejoint_le ? moment(participant_quitte.rejoint_le).format(moment_date_time_format) : null,
+            quitte_le: participant_quitte.quitte_le ? moment(participant_quitte.quitte_le).format(moment_date_time_format) : null,
+        }
+    });
+}
+
 export const ajouter_participant_email: RequestHandler = async (req: Request, res: Response) => {
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;

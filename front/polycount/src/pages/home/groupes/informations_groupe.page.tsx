@@ -163,16 +163,16 @@ function InformationsGroupe() {
             <div>
               <div className="centre">
                 <div style={{ display: 'flex', gap: '40px' }}>
-                    <button className={"lien-block" + (section_selectionnee == 0 ? " underline" : "")} onClick={() => set_section_selectionnee(0)}>dépenses</button>
-                    <button className={"lien-block" + (section_selectionnee == 1 ? " underline" : "")} onClick={() => set_section_selectionnee(1)}>participants</button>
-                    <button className={"lien-block" + (section_selectionnee == 2 ? " underline" : "")} onClick={() => set_section_selectionnee(2)}>réglages</button>
+                    <button className={"lien-block" + (section_selectionnee === 0 ? " underline" : "")} onClick={() => set_section_selectionnee(0)}>dépenses</button>
+                    <button className={"lien-block" + (section_selectionnee === 1 ? " underline" : "")} onClick={() => set_section_selectionnee(1)}>participants</button>
+                    <button className={"lien-block" + (section_selectionnee === 2 ? " underline" : "")} onClick={() => set_section_selectionnee(2)}>réglages</button>
                 </div>
               </div>
               {
-                section_selectionnee == 0 ?
+                section_selectionnee === 0 ?
                 <InformationDepense groupe={ groupe } participant_actuel={ participant_actuel } nom_participants={ nom_participants } /> : 
-                section_selectionnee == 1 ?
-                <InformationParticipant groupe={ groupe } participants={ participants_groupe } utilisateurs={ utilisateurs }  nom_participants={ nom_participants } participant_actuel={ participant_actuel } ajouter_participant={ (p: ParticipantGroupe) => set_participants_groupe([...participants_groupe, p]) } ajouter_utilisateur={ (u: Utilisateur) => set_utilisateurs([...utilisateurs, u]) } /> :
+                section_selectionnee === 1 ?
+                <InformationParticipant groupe={ groupe } participants={ participants_groupe } utilisateurs={ utilisateurs }  nom_participants={ nom_participants } participant_actuel={ participant_actuel } ajouter_participant={ (p: ParticipantGroupe) => set_participants_groupe([...participants_groupe, p]) } ajouter_utilisateur={ (u: Utilisateur) => set_utilisateurs([...utilisateurs, u]) } set_participants={ set_participants_groupe } /> :
                 <ReglageGroupe />
               }
             </div>

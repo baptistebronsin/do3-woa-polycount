@@ -1,8 +1,6 @@
 import moment from "moment";
 import { Depense } from "../../models/depense.model";
 import { moment_date_time_format } from "../../utils/moment.util";
-import { ParticipantGroupe } from "../../models/participant_groupe.model";
-import { Utilisateur } from "../../models/utilisateur.model";
 import { AffiliationDepense } from "../../models/affiliation_depense.model";
 import { NomParticipant } from "../../pages/home/groupes/informations_groupe.page";
 
@@ -32,7 +30,7 @@ function CarteDepense({ depense, nom_participants, affiliations, est_selectionne
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
                         <p>{ depense.titre }</p>
                         {
-                            participant_createur != undefined ?
+                            participant_createur !== undefined ?
                             <p style={{ color: 'grey' }}>Payé par { participant_createur.nom ?? "Participant n°" + participant_createur.pk_participant_id }</p> :
                             <p>Payé par Casper</p>
                         }
@@ -49,12 +47,12 @@ function CarteDepense({ depense, nom_participants, affiliations, est_selectionne
                             (affiliation: AffiliationDepense) => affiliation.fk_depense_id === depense.pk_depense_id
                         ).map(
                             (affiliation: AffiliationDepense, index: number) => {
-                                if (index == 0)
+                                if (index === 0)
                                     return (
                                     <p key={index} className="inline-block">{nom_participants.find(
                                         (participant: NomParticipant) => participant.pk_participant_id === affiliation.fk_participant_groupe_id)?.nom}</p>
                                         )
-                                else if (affiliations.filter((affiliation: AffiliationDepense) => affiliation.fk_depense_id === depense.pk_depense_id).length - 1 == index)
+                                else if (affiliations.filter((affiliation: AffiliationDepense) => affiliation.fk_depense_id === depense.pk_depense_id).length - 1 === index)
                                     return (
                                         <p key={index} className="inline-block">&nbsp;et {nom_participants.find(
                                             (participant: NomParticipant) => participant.pk_participant_id === affiliation.fk_participant_groupe_id)?.nom}</p>

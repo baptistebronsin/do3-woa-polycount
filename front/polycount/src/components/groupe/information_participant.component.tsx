@@ -7,7 +7,7 @@ import { moment_date_format } from "../../utils/moment.util";
 import { SyntheticEvent, useEffect, useState } from "react";
 import SelecteurDynamique from "../input/selecteur_dynamique.component";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope, faFloppyDisk, faPencil } from "@fortawesome/free-solid-svg-icons";
 import TextInput from "../input/text_input.component";
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
@@ -15,12 +15,24 @@ import { AuthContextType, useAuth } from "../../providers/authentification.provi
 import { NavigateFunction, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import LoaderSpinner from "../loader/loader_spinner.component";
+import Selecteur from "../input/selecteur.component";
 
-function InformationParticipant ({ groupe, participants, utilisateurs, nom_participants, participant_actuel, ajouter_participant, ajouter_utilisateur }: { groupe: Groupe, participants: ParticipantGroupe[], utilisateurs: Utilisateur[], nom_participants: NomParticipant[], participant_actuel: ParticipantGroupe, ajouter_participant: Function, ajouter_utilisateur: Function }) {
+function InformationParticipant ({ groupe, participants, utilisateurs, nom_participants, participant_actuel, ajouter_participant, ajouter_utilisateur, set_participants }: { groupe: Groupe, participants: ParticipantGroupe[], utilisateurs: Utilisateur[], nom_participants: NomParticipant[], participant_actuel: ParticipantGroupe, ajouter_participant: Function, ajouter_utilisateur: Function, set_participants: Function }) {
     const navigate: NavigateFunction = useNavigate();
     const authentification: AuthContextType | null = useAuth();
 
     const [ajouter_participant_action, set_ajouter_participant_action] = useState<boolean>(false);
+    const [participant_selectionne, set_participant_selectionne] = useState<ParticipantGroupe | undefined>(undefined);
+
+    const selectionner_participant = (p: ParticipantGroupe) => {
+        set_participant_selectionne(p);
+    }
+
+    const modification_participant = async (p: ParticipantGroupe) => {
+        const participants_fun: ParticipantGroupe[] = [...participants.filter((p1: ParticipantGroupe) => p1.pk_participant_groupe_id !== p.pk_participant_groupe_id), p];
+        set_participants(participants_fun);
+        set_participant_selectionne(p);
+    }
 
     return (
         <div style={{ margin: '10px 20px' }}>
@@ -32,55 +44,373 @@ function InformationParticipant ({ groupe, participants, utilisateurs, nom_parti
                 <p>Informations sur les participants</p>
                 <button className="full-button" onClick={ () => set_ajouter_participant_action(true) }>Ajouter un participant</button>
             </div>
-            <div>
+            {
+                participant_selectionne !== undefined ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '600px auto' }}>
+                        <div>
+                            {
+                                participants.map((participant: ParticipantGroupe) => <PetiteCarteParticipant groupe={ groupe } participant={ participant } nom_participants={ nom_participants } utilisateurs={ utilisateurs } participant_actuel={ participant_actuel } est_selectionnee={ participant_selectionne === participant } participant_clique={ selectionner_participant } />)
+                            }
+                            <div style={{ height: '50px' }}></div>
+                        </div>
+                        <div>
+                            <GrandeCarteParticipant groupe={ groupe } participant={ participant_selectionne } nom_participants={ nom_participants } utilisateurs={ utilisateurs } participant_actuel={ participant_actuel } modification_participant={ modification_participant } />
+                        </div>
+                    </div>
+                ): (
+                    <div>
+                        {
+                            participants.map((participant: ParticipantGroupe) => <PetiteCarteParticipant groupe={ groupe } participant={ participant } nom_participants={ nom_participants } utilisateurs={ utilisateurs } participant_actuel={ participant_actuel } est_selectionnee={ false } participant_clique={ selectionner_participant } />)
+                        }
+                        <div style={{ height: '50px' }}></div>
+                    </div>
+                )
+            }
+        </div>
+    );
+}
+
+function PetiteCarteParticipant ({ groupe, participant, nom_participants, utilisateurs, participant_actuel, est_selectionnee, participant_clique }: { groupe: Groupe, participant: ParticipantGroupe, nom_participants: NomParticipant[], utilisateurs: Utilisateur[], participant_actuel: ParticipantGroupe, est_selectionnee: boolean, participant_clique: Function }) {
+    const nom_participant: NomParticipant | undefined = nom_participants.find((nom_participant: NomParticipant) => nom_participant.pk_participant_id === participant.pk_participant_groupe_id);
+    const utilisateur: Utilisateur | undefined = utilisateurs.find((utilisateur: Utilisateur) => utilisateur.pk_utilisateur_id === participant.fk_utilisateur_id);
+
+    const statut: string = groupe.fk_utilisateur_createur_id === utilisateur?.pk_utilisateur_id ? "Administrateur" : utilisateurs.find((u: Utilisateur) => u.pk_utilisateur_id === participant.fk_utilisateur_id) ? "Participant" : "Participant fictif";
+
+    const selectionner = () => {
+        participant_clique(est_selectionnee ? undefined : participant);
+    }
+
+    return (
+        <div key={ participant.pk_participant_groupe_id } className="centre" style={{ margin: '20px 0' }}>
+            <div style={{ backgroundColor: est_selectionnee ? 'rgba(75, 123, 180, 0.06)' : 'white', padding: '10px', borderRadius: '10px', border: est_selectionnee ? '2px solid #4B7BB4' : '2px solid grey', width: '500px' }} className="hover" onClick={ selectionner }>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <p>{ nom_participant ? nom_participant.nom : "Casper" } <span style={{ color: 'grey' }}>{ nom_participant?.pk_participant_id === participant_actuel.pk_participant_groupe_id ? "(Vous)" : "" }</span></p>
+                    <p style={{ color: statut === 'Administrateur' ? '#BA15C7' : statut === "Participant" ? '#35C715' : '#4B7BB4' }}>{ statut }</p>
+                </div>
                 {
-                    participants.map((participant: ParticipantGroupe, index: number) => {
-                        const nom_participant: NomParticipant | undefined = nom_participants.find((nom_participant: NomParticipant) => nom_participant.pk_participant_id === participant.pk_participant_groupe_id);
-                        const utilisateur: Utilisateur | undefined = utilisateurs.find((utilisateur: Utilisateur) => utilisateur.pk_utilisateur_id === participant.fk_utilisateur_id);
+                    participant.fk_utilisateur_id === null ?
+                    <>
+                        {
+                            participant.quitte_le !== null ?
+                            <>
+                                <div style={{ height: '10px' }}></div>
+                                <hr />
+                                <p><span style={{ color: 'grey' }}>Exclusion du groupe : </span><span style={{ color: 'red' }}>{ moment(participant.quitte_le).format(moment_date_format) }</span></p>
+                            </> : <></>
+                        }
+                    </> :
+                    <>
+                        <div style={{ height: '10px' }}></div>
+                        <hr />
+                        <div style={{ height: '10px' }}></div>
+                        {
+                            participant.rejoint_le ?
+                            <p><span style={{ color: 'grey' }}>Rejoint le groupe : </span>{ moment(participant.rejoint_le).format(moment_date_format) }</p>:
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4B7BB4' }}>
+                                <p>Invitation envoyée</p>
+                                &nbsp;<FontAwesomeIcon icon={faEnvelope} />
+                            </div>
+                        }
+                        {
+                            participant.montant_max_depense ?
+                            <p><span style={{ color: 'grey' }}>Montant maximum des dépenses : </span><span style={{ color: 'red' }}>{ participant.montant_max_depense.toFixed(2) } €</span></p> :
+                            <></>
+                        }
+                        {
+                            participant.quitte_le ?
+                            <p><span style={{ color: 'grey' }}>Quitté le groupe : </span><span style={{ color: 'red' }}>{ moment(participant.quitte_le).format(moment_date_format) }</span></p> :
+                            <></>
+                        }
+                    </>
+                }
+            </div>
+        </div>
+    )
+}
 
-                        const statut: string = groupe.fk_utilisateur_createur_id === utilisateur?.pk_utilisateur_id ? "Administrateur" : utilisateurs.find((u: Utilisateur) => u.pk_utilisateur_id === participant.fk_utilisateur_id) ? "Participant" : "Participant fictif";
+function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilisateurs, participant_actuel, modification_participant }: { groupe: Groupe, participant: ParticipantGroupe, nom_participants: NomParticipant[], utilisateurs: Utilisateur[], participant_actuel: ParticipantGroupe, modification_participant: Function }) {
+    const navigate: NavigateFunction = useNavigate();
+    const authentification: AuthContextType | null = useAuth();
 
-                        return (
-                        <div key={ index } className="centre" style={{ margin: '20px 0' }}>
-                            <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '10px', border: '2px solid grey', width: '500px' }} className="hover">
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <p>{ nom_participant ? nom_participant.nom : "Casper" } <span style={{ color: 'grey' }}>{ nom_participant?.pk_participant_id === participant_actuel.pk_participant_groupe_id ? "(Vous)" : "" }</span></p>
-                                    <p style={{ color: statut === 'Administrateur' ? '#BA15C7' : statut === "Participant" ? '#35C715' : '#4B7BB4' }}>{ statut }</p>
-                                </div>
+    const [nom_participant, set_nom_participant] = useState<NomParticipant | undefined>(undefined);
+    const [utilisateur, set_utilisateur] = useState<Utilisateur | undefined>(undefined);
+
+    const statut: string = groupe.fk_utilisateur_createur_id === utilisateur?.pk_utilisateur_id ? "Administrateur" : utilisateurs.find((u: Utilisateur) => u.pk_utilisateur_id === participant.fk_utilisateur_id) ? "Participant" : "Participant fictif";
+
+    const [est_modification, set_est_modification] = useState<boolean>(false);
+
+    const [nom_participant_modif, set_nom_participant_modif] = useState<string>("");
+
+    const [creation_depense, set_creation_depense] = useState<'true' | 'false'>("true");
+    const [modification_depense, set_modification_depense] = useState<'true' | 'false'>("true");
+    const [suppression_depense, set_suppression_depense] = useState<'true' | 'false'>("true");
+    const [modification_tags, set_modification_tags] = useState<'true' | 'false'>("true");
+    const [modification_montant_max, set_modification_montant_max] = useState<'true' | 'false'>('true');
+    const [montant_max, set_montant_max] = useState<string>("");
+
+    const [chargement_modification, set_chargement_modification] = useState<boolean>(false);
+    const [chargement_suppression, set_chargement_suppression] = useState<boolean>(false);
+
+    const [message_erreur, set_message_erreur] = useState<string>("");
+
+    useEffect(() => {
+        set_est_modification(false);
+
+        set_nom_participant(nom_participants.find((nom_participant: NomParticipant) => nom_participant.pk_participant_id === participant.pk_participant_groupe_id));
+        set_utilisateur(utilisateurs.find((u: Utilisateur) => u.pk_utilisateur_id === participant.fk_utilisateur_id));
+
+        set_creation_depense(participant.peut_creer_depense ? "true" : "false");
+        set_modification_depense(participant.peut_modifier_depense ? "true" : "false");
+        set_suppression_depense(participant.peut_supprimer_depense ? "true" : "false");
+        set_modification_tags(participant.peut_manipuler_tag ? "true" : "false");
+        set_modification_montant_max(participant.peut_modifier_montant_max_depense ? "true" : "false");
+        set_montant_max(participant.montant_max_depense ? participant.montant_max_depense + "" : "");
+    }, [participant]);
+
+    useEffect(() => {
+        set_nom_participant_modif(nom_participant && nom_participant.nom != null ? nom_participant.nom : 'Casper')
+    }, [nom_participant]);
+
+    const switch_modification = () => {
+        set_est_modification(!est_modification);
+    }
+
+    const modifier_participant_api = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (participant.fk_utilisateur_id === null && nom_participant_modif === "") {
+            set_message_erreur("Veuillez spécifier un nom.");
+            return ;
+        }
+
+        if (montant_max !== "" && isNaN(Number(montant_max))) {
+            set_message_erreur("Si vous souhaitez préciser un montant maximum de dépense, veillez à ce que ce soit un nombre.");
+            return ;
+        }
+
+        if (montant_max !== "" && Number(montant_max) < 0) {
+            set_message_erreur("Veuillez préciser un montant maximum de dépense positif.");
+            return ;
+        }
+
+        const api_body = {
+            participant_groupe_id: participant.pk_participant_groupe_id,
+            nom: nom_participant_modif,
+            peut_creer_depense: creation_depense === "true",
+            peut_modifier_depense: modification_depense === "true",
+            peut_supprimer_depense: suppression_depense === "true",
+            peut_manipuler_tag: modification_tags === "true",
+            peut_modifier_montant_max_depense: modification_montant_max === "true",
+            montant_max_depense: montant_max === "" ? null : Number(montant_max)
+        }
+
+        console.table(api_body);
+
+        set_chargement_modification(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PATCH', "/groupe/participant/modifier", api_body, authentification, navigate, true);
+
+        set_chargement_modification(false);
+
+        if (reponse && 'data' in reponse) {
+            if ('message' in reponse.data)
+                toast.success(reponse.data.message);
+            else
+                toast.success("Le participant a bien été modifié.");
+
+            modification_participant(ParticipantGroupe.from_JSON(reponse.data.data));
+            set_est_modification(false);
+        }
+    }
+
+    const supprimer_participant_api = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (groupe.fk_utilisateur_createur_id === participant.fk_utilisateur_id) {
+            toast.warning("L'administrateur du groupe ne peut pas être exclu du groupe.");
+            return ;
+        }
+
+        const api_body = {
+            participant_groupe_id: participant.pk_participant_groupe_id
+        }
+
+        set_chargement_suppression(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PATCH', "/groupe/participant/quitter", api_body, authentification, navigate, true);
+
+        set_chargement_suppression(false);
+
+        if (reponse && 'data' in reponse) {
+            if ('message' in reponse.data)
+                toast.success(reponse.data.message);
+            else
+                toast.success("Le participant a bien été exclu.");
+
+            modification_participant(ParticipantGroupe.from_JSON(reponse.data.data));
+        }
+    }
+
+    return (
+        <div style={{ backgroundColor: 'white', borderRadius: '10px', width: '100%', margin: '20px 0', padding: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p>Informations sur le participant</p>
+            {
+                groupe.fk_utilisateur_createur_id === participant_actuel.fk_utilisateur_id ? (
+                    <>
+                    {
+                        est_modification ?
+                        <div style={{ display: 'flex', gap: '20px' }}>
+                            <button className="lien" onClick={ switch_modification }>Annuler</button>
+                            {
+                                chargement_modification ?
+                                <button className="full-button centre-centre" onClick={() => {}}>
+                                    <LoaderSpinner />
+                                    <p className="inline-block">&nbsp;Modification en cours</p>
+                                </button> :
+                                <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ modifier_participant_api }>
+                                    <FontAwesomeIcon icon={faFloppyDisk} />
+                                    Enregistrer
+                                </button>
+                            }
+                        </div> :
+                        <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={switch_modification}>
+                            <FontAwesomeIcon icon={faPencil} />
+                            Modifier
+                        </button>
+                    }
+                    </>
+                ) : (<></>)
+            }
+            </div>
+            <div>
+                <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <p>Nom d'usage :</p>
+                    {
+                        est_modification && statut === "Participant fictif" ? (
+                            <div style={{ width: '40%', marginBottom: '10px' }}>
+                                <TextInput label="Nom participant" value={ nom_participant_modif } longueur_max={30} valeur_defaut={ nom_participant_modif } onChange={ (e: any) => set_nom_participant_modif(e.target.value) } style={{ color: 'black', fontSize: '18px' }} />
+                            </div>
+                        ) : (
+                            <span style={{ color: 'black' }}>{ nom_participant && nom_participant.nom ? nom_participant.nom : 'Casper' }</span>
+                        )
+                    }
+                </div>
+
+                <p style={{ color: 'grey' }}>Statut : <span style={{ color: 'black' }}>{ statut }</span></p>
+                <div style={{ height: '20px' }}></div>
+                {
+                    utilisateur ? (
+                    <>
+                        <p>Informations utilisateur :</p>
+                        <div style={{ margin: '0 30px' }}>
+                            <p style={{ color: 'grey' }}>Nom : <span style={{ color: 'black' }}>{ utilisateur.nom }</span></p>
+                            <p style={{ color: 'grey' }}>Prénom : <span style={{ color: 'black' }}>{ utilisateur.prenom }</span></p>
+                            <p style={{ color: 'grey' }}>Email : <span style={{ color: 'black' }}>{ utilisateur.email }</span></p>
+                            <p style={{ color: 'grey' }}>Rejoint le groupe le : <span style={{ color: 'black' }}>{ moment(participant.rejoint_le).format(moment_date_format) }</span></p>
+                            {
+                                participant.quitte_le ?
+                                <p style={{ color: 'grey' }}>Quitté le groupe le : <span style={{ color: 'black' }}>{ moment(participant.quitte_le).format(moment_date_format) }</span></p> : <></>
+                            }
+                        </div>
+                        <p>Autorisations :</p>
+                        <div style={{ margin: '0 30px' }}>
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <p>Peut créer une dépense :</p>
                                 {
-                                    participant.fk_utilisateur_id === null ?
-                                    <></> :
-                                    <>
-                                        <div style={{ height: '10px' }}></div>
-                                        <hr />
-                                        <div style={{ height: '10px' }}></div>
-                                        {
-                                            participant.rejoint_le ?
-                                            <p><span style={{ color: 'grey' }}>Rejoint le groupe : </span>{ moment(participant.rejoint_le).format(moment_date_format) }</p>:
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4B7BB4' }}>
-                                                <p>Invitation envoyée</p>
-                                                &nbsp;<FontAwesomeIcon icon={faEnvelope} />
-                                            </div>
-                                        }
-                                        {
-                                            participant.montant_max_depense ?
-                                            <p><span style={{ color: 'grey' }}>Montant maximum des dépenses : </span><span style={{ color: 'red' }}>{ participant.montant_max_depense.toFixed(2) } €</span></p> :
-                                            <></>
-                                        }
-                                        {
-                                            participant.quitte_le ?
-                                            <p><span style={{ color: 'grey' }}>Quitté le groupe : </span><span style={{ color: 'red' }}>{ moment(participant.quitte_le).format(moment_date_format) }</span></p> :
-                                            <></>
-                                        }
-                                    </>
+                                    est_modification ? (
+                                        <div style={{ color: 'black' }}>
+                                            <Selecteur label="" options={[{ value: "true", label: "Activé" }, { value: "false", label: "Désactivé" }]} valeur_defaut={ creation_depense } changement={ set_creation_depense }/>
+                                        </div>
+                                    ) : (<span style={{ color: 'black' }}>{ participant.peut_creer_depense ? "Activé" : "Désactivé" }</span>)
+                                }
+                            </div>
+
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <p>Peut modifier une dépense :</p>
+                                {
+                                    est_modification ? (
+                                        <div style={{ color: 'black', marginBottom: '10px' }}>
+                                            <Selecteur label="" options={[{ value: "true", label: "Activé" }, { value: "false", label: "Désactivé" }]} valeur_defaut={ modification_depense } changement={ set_modification_depense }/>
+                                        </div>
+                                    ) : (<span style={{ color: 'black' }}>{ participant.peut_modifier_depense ? "Activé" : "Désactivé" }</span>)
+                                }
+                            </div>
+                            
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <p>Peut supprimer une dépense :</p>
+                                {
+                                    est_modification ? (
+                                        <div style={{ color: 'black', marginBottom: '10px' }}>
+                                            <Selecteur label="" options={[{ value: "true", label: "Activé" }, { value: "false", label: "Désactivé" }]} valeur_defaut={ suppression_depense } changement={ set_suppression_depense }/>
+                                        </div>
+                                    ) : (<span style={{ color: 'black' }}>{ participant.peut_supprimer_depense ? "Activé" : "Désactivé" }</span>)
+                                }
+                            </div>
+                            
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <p>Peut manipuler les tags :</p>
+                                {
+                                    est_modification ? (
+                                        <div style={{ color: 'black', marginBottom: '10px' }}>
+                                            <Selecteur label="" options={[{ value: "true", label: "Activé" }, { value: "false", label: "Désactivé" }]} valeur_defaut={ modification_tags } changement={ set_modification_tags }/>
+                                        </div>
+                                    ) : (<span style={{ color: 'black' }}>{ participant.peut_manipuler_tag ? "Activé" : "Désactivé" }</span>)
+                                }
+                            </div>
+
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <p>Peut modifier son montant maximum de dépense :</p>
+                                {
+                                    est_modification ? (
+                                        <div style={{ color: 'black', marginBottom: '18px' }}>
+                                            <Selecteur label="" options={[{ value: "true", label: "Activé" }, { value: "false", label: "Désactivé" }]} valeur_defaut={ modification_montant_max } changement={ set_modification_montant_max }/>
+                                        </div>
+                                    ) : (<span style={{ color: 'black' }}>{ participant.peut_modifier_montant_max_depense ? "Activé" : "Désactivé" }</span>)
+                                }
+                            </div>
+                            
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                                <p>Montant maximum de dépense :</p>
+                                {
+                                    est_modification ? (
+                                        <div style={{ width: '40%', marginBottom: '10px' }}>
+                                        <TextInput label="Montant max dépense" value={ montant_max } valeur_defaut={ montant_max } onChange={ (e: any) => set_montant_max(e.target.value) } style={{ color: 'black', fontSize: '18px' }} />
+                                    </div>
+                                    ) : (<span style={{ color: 'black' }}>{ participant.montant_max_depense ? participant.montant_max_depense.toFixed(2) + " €" : "Aucun" }</span>)
                                 }
                             </div>
                         </div>
-                        )
-                    })
+                    </>
+                    ) : (
+                    <>
+                        <p style={{ color: 'grey' }}>Informations utilisateur : <span style={{ color: 'black' }}>Inexistant</span></p>
+                        {
+                            groupe.fk_utilisateur_createur_id === participant_actuel.fk_utilisateur_id && participant.quitte_le === null ?
+                            <button className="lien">Associer un utilisateur</button> : <></>
+                        }
+                    </>
+                    )
                 }
-                <div style={{ height: '50px' }}></div>
             </div>
+            {
+                !est_modification && participant.pk_participant_groupe_id !== participant_actuel.pk_participant_groupe_id && participant.fk_utilisateur_id !== groupe.fk_utilisateur_createur_id && participant_actuel.fk_utilisateur_id === groupe.fk_utilisateur_createur_id && participant.quitte_le === null ? (
+                    <>
+                        <div style={{ height: '30px' }}></div>
+                        <div className="centre">
+                            {
+                                chargement_suppression ?
+                                <button className="delete-button centre-centre" onClick={() => {}}>
+                                    <LoaderSpinner />
+                                    <p className="inline-block">&nbsp;Exclusion en cours</p>
+                                </button> :
+                                <button className="delete-button" onClick={ supprimer_participant_api }>Exclure le participant</button>
+                            }
+                        </div>
+                    </>
+                ) : <></>
+            }
+            <p style={{ color: 'red', textAlign: 'center' }}>{ message_erreur }</p>
         </div>
     );
 }
@@ -105,10 +435,10 @@ function AjouterParticipant ({ groupe, participant_actuel, annulation, authentif
                         </div>
                         {
                             type_ajout === 1 ?
-                            <Ajout_Email groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } ajouter_utilisateur={ ajouter_utilisateur } />:
+                            <AjoutEmail groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } ajouter_utilisateur={ ajouter_utilisateur } />:
                             type_ajout === 2 ?
-                            <Ajout_Lien groupe={ groupe } authentification={ authentification } navigate={ navigate } />:
-                            <Ajout_Fictif groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } />
+                            <AjoutLien groupe={ groupe } authentification={ authentification } navigate={ navigate } />:
+                            <AjoutFictif groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } />
                         }
                     </div>:
                     <>
@@ -124,7 +454,7 @@ function AjouterParticipant ({ groupe, participant_actuel, annulation, authentif
     );
 }
 
-function Ajout_Email ({ groupe, authentification, navigate, ajouter_participant, ajouter_utilisateur }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction, ajouter_participant: Function, ajouter_utilisateur: Function }) {
+function AjoutEmail ({ groupe, authentification, navigate, ajouter_participant, ajouter_utilisateur }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction, ajouter_participant: Function, ajouter_utilisateur: Function }) {
     const [email, set_email] = useState<string>("");
     const [chargement, set_chargement] = useState<boolean>(false);
     const [message_erreur, set_message_erreur] = useState<string>("");
@@ -193,7 +523,7 @@ function Ajout_Email ({ groupe, authentification, navigate, ajouter_participant,
     );
 }
 
-function Ajout_Lien ({ groupe, authentification, navigate }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction }) {
+function AjoutLien ({ groupe, authentification, navigate }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction }) {
     const [lien, set_lien] = useState<{ url: string, temps_valide: number } | undefined>(undefined);
 
     const [chargement, set_chargement] = useState<boolean>(false);
@@ -251,7 +581,7 @@ function Ajout_Lien ({ groupe, authentification, navigate }: { groupe: Groupe, a
     );
 }
 
-function Ajout_Fictif ({ groupe, authentification, navigate, ajouter_participant }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction, ajouter_participant: Function }) {
+function AjoutFictif ({ groupe, authentification, navigate, ajouter_participant }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction, ajouter_participant: Function }) {
     const [nom_participant, set_nom_participant] = useState<string>("");
     const [chargement, set_chargement] = useState<boolean>(false);
     const [message_erreur, set_message_erreur] = useState<string>("");
@@ -263,7 +593,7 @@ function Ajout_Fictif ({ groupe, authentification, navigate, ajouter_participant
     const creer_participant_fictif = async (e: SyntheticEvent) => {
         e.preventDefault();
 
-        if (nom_participant == "") {
+        if (nom_participant === "") {
             set_message_erreur("Veuillez saisir un nom.");
             return;
         }

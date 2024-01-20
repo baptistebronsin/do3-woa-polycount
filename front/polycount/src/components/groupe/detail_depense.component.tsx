@@ -85,14 +85,16 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                         <p style={{ color: 'grey' }}>Tags : </p>
                         <div style={{ display: 'flex', gap: '10px' }}>
                         {
-                            attribution_tags.length == 0 ?
+                            attribution_tags.length === 0 ?
                             <p>Aucun tag</p> :
                             attribution_tags.map((tag: { fk_depense_id: number; fk_tag_id: number }) => {
                                 const tag_trouve: Tag | undefined = tags.find((t: Tag) => t.pk_tag_id === tag.fk_tag_id);
 
-                                if (tag_trouve != undefined) {
+                                if (tag_trouve !== undefined) {
                                     return <PastilleTag tag={ tag_trouve } />
                                 }
+
+                                return <></>
                             })
                         }
                         </div>
@@ -109,9 +111,10 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                                     (affiliation: AffiliationDepense) => affiliation.fk_participant_groupe_id === nom_participant.pk_participant_id && affiliation.fk_depense_id === depense.pk_depense_id
                                 );
 
-                                if (participant_trouve != undefined) {
+                                if (participant_trouve !== undefined) {
                                     return <DetailDepenseParticipant participant_id={ participant_trouve.fk_participant_groupe_id } depense={ depense } nom_participant={ nom_participant } affiliations={ affiliations } />
                                 }
+                                return <></>
                             })
                         }
                         </div>
@@ -136,7 +139,7 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
 function DetailDepenseParticipant ({ participant_id, depense, nom_participant, affiliations }: { participant_id: number, depense: Depense, nom_participant: NomParticipant, affiliations: AffiliationDepense[] }) {
     const affiliation: AffiliationDepense | undefined = affiliations.find((affiliation: AffiliationDepense) => affiliation.fk_participant_groupe_id === participant_id && affiliation.fk_depense_id === depense.pk_depense_id);
 
-    const montant_calcule: number = (depense.montant - affiliations.filter((a: AffiliationDepense) => a.fk_depense_id === depense.pk_depense_id && a.montant != null).reduce((somme: number, a: AffiliationDepense) => somme += (a.montant ?? 0), 0)) / (affiliations.filter((a: AffiliationDepense) => a.fk_depense_id === depense.pk_depense_id && a.montant == null).length);
+    const montant_calcule: number = (depense.montant - affiliations.filter((a: AffiliationDepense) => a.fk_depense_id === depense.pk_depense_id && a.montant !== null).reduce((somme: number, a: AffiliationDepense) => somme += (a.montant ?? 0), 0)) / (affiliations.filter((a: AffiliationDepense) => a.fk_depense_id === depense.pk_depense_id && a.montant === null).length);
     const montant_affiliation: string = affiliation && affiliation.montant != null ? affiliation.montant.toFixed(2) : montant_calcule.toFixed(2);
 
     return (
