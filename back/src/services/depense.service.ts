@@ -35,7 +35,7 @@ export const creer_depense = async (groupe_id: number, participant_createur: num
     return result;
 }
 
-export const modifier_depense = async (depense_id: number, titre: string, montant: number, url_image: string | null): Promise<Depense> => {
+export const modifier_depense = async (depense_id: number, titre: string, montant: number, participant_createur: number, url_image: string | null): Promise<Depense> => {
     const result: Depense = await prisma.depense.update({
         where: {
             pk_depense_id: depense_id
@@ -43,6 +43,7 @@ export const modifier_depense = async (depense_id: number, titre: string, montan
         data: {
             titre: titre,
             montant: montant,
+            fk_participant_createur_id: participant_createur,
             lien_image: url_image
         }
     });
@@ -140,4 +141,19 @@ export const lier_depense_participants = async (depense_id: number, participant_
     });
 
     return result;
+}
+
+export const lier_depense_tags = async (depense_id: number, tag_id: number): Promise<void> => {
+    await prisma.depense.update({
+        where: {
+            pk_depense_id: depense_id
+        },
+        data: {
+            tags: {
+                connect: {
+                    pk_tag_id: tag_id
+                }
+            }
+        }
+    });
 }

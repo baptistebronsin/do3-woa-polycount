@@ -17,6 +17,7 @@ function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function,
 
     const [nom, set_nom] = useState<string>("");
     const [description, set_description] = useState<string>("");
+    const [url_image, set_url_image] = useState<string>("");
 
     const [participants, set_participants] = useState<string[]>([]);
     const [information, set_information] = useState<boolean>(false);
@@ -85,7 +86,7 @@ function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function,
         const api_body: any = {
             nom: nom,
             description: description,
-            lien_image: null,
+            lien_image: url_image,
             participants: participants
         };
 
@@ -134,9 +135,11 @@ function CreationGroupe ({ annulation, ajouter_groupe }: { annulation: Function,
                         </div>
                         <hr />
                         <div>
-                            <div style={{ height: '10px' }}></div>
-                            <p>Ajout d'une image</p>
-                             <p>A FAIRE</p>
+                            <div style={{ height: '30px' }}></div>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <label>URL de l'image :&nbsp;</label>
+                                <TextInput type="url" label="URL de l'image" value={url_image} onChange={ (e: any) => set_url_image(e.target.value) } placeholder="https://..." style={{ width: '340px' }} />
+                            </div>
                         </div>
                     </div>
                     <div style={{ borderLeft: '1px solid #8E8E8E' }}></div>

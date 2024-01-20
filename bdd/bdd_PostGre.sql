@@ -94,22 +94,8 @@ CREATE TABLE Suspension (
 );
 
 INSERT INTO "public"."Tag" (titre, couleur, icon)
-VALUES ('Transport', '2764C8', 'fa-plane'),
-       ('Nourriture', '2FD431', 'fa-utensils'),
-       ('Logement', 'D125DC', 'fa-home'),
-       ('Activité', 'EA7C0F', 'fa-hiking'),
-       ('Autre', '000000', 'fa-question');
-
-INSERT INTO "public"."Depense" (fk_groupe_id, fk_participant_createur_id, titre, montant, ajoute_le, lien_image)
-VALUES (1, 1, 'Pizza', 10.50, '2024-01-07 12:00:00', NULL),
-       (1, 1, 'Musée de la BD', 7.00, NOW(), NULL),
-       (1, 1, 'Taxi', 15.00, NOW(), NULL),
-       (1, 1, 'Hôtel', 50.00, NOW(), NULL),
-       (1, 1, 'Avion', 200.00, NOW(), NULL);
-
-INSERT INTO "public"."Participant_Groupe_Liee_Depense" (fk_participant_groupe_id, fk_depense_id, montant)
-VALUES (1, 1, NULL),
-       (1, 2, 7.00),
-       (1, 3, NULL),
-       (1, 4, NULL),
-       (1, 5, 200.00);
+VALUES ('Transport', '2764C8', 'faPlane'),
+       ('Nourriture', '2FD431', 'faUtensils'),
+       ('Logement', 'D125DC', 'faHome'),
+       ('Activité', 'EA7C0F', 'faHiking'),
+       ('Autre', '000000', 'faQuestion');

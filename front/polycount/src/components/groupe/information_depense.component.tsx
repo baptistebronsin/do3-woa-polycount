@@ -177,6 +177,9 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
                     ajouter_depense={ ajouter_depense }
                     nom_participants={nom_participants}
                     participant_actuel={participant_actuel}
+                    tags={tags}
+                    ajouter_affiliations={ (aff: AffiliationDepense[]) => set_attribution_depenses([...attribution_depenses, ...aff]) }
+                    ajouter_tags={ (t: { fk_depense_id: number; fk_tag_id: number }[]) => set_attribution_tags([...attribution_tags, ...t]) }
                   />
                 ) : <p style={{ textAlign: 'center', color: 'red' }}>Service de création suspendu</p>
               ) : (
@@ -188,7 +191,7 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
                 <div style={{ height: '47px' }}></div> :
                 <button
                 className="full-button"
-                onClick={() => set_ajoute_depense(true)}
+                onClick={ participant_actuel !== null && participant_actuel.peut_creer_depense ? () => set_ajoute_depense(true) : () => toast.warning("Vous n'avez pas les permissions pour créer une dépense")}
                 >
                 Ajouter une dépense
                 </button>
@@ -217,7 +220,7 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
                   <div style={{ margin: "0 20px" }}>
                     {
                       depenses.find((d: Depense) => d.pk_depense_id === depense_selectionnee) ?
-                      <DetailDepense depense={ depenses.find((d: Depense) => d.pk_depense_id === depense_selectionnee)! } nom_participants={ nom_participants } affiliations={ attribution_depenses } tags={ tags } attribution_tags={ attribution_tags.filter((tag) => tag.fk_depense_id === depense_selectionnee) } suppression={ supprimer_depense } /> :
+                      <DetailDepense depense={ depenses.find((d: Depense) => d.pk_depense_id === depense_selectionnee)! } nom_participants={ nom_participants } affiliations={ attribution_depenses } tags={ tags } attribution_tags={ attribution_tags.filter((tag) => tag.fk_depense_id === depense_selectionnee) } suppression={ supprimer_depense } participant_actuel={ participant_actuel } modifier_depense={ (d: Depense) => set_depenses([...depenses.filter((dep: Depense) => dep.pk_depense_id !== d.pk_depense_id), d]) } /> :
                         nom_participants.length > 0 ? (
                           <GraphiqueDepense
                             nom_participants={nom_participants}

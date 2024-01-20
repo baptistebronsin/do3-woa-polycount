@@ -3,7 +3,7 @@ import { AffiliationDepense } from "../../models/affiliation_depense.model";
 import { Depense } from "../../models/depense.model";
 import { NomParticipant } from "../../pages/home/groupes/informations_groupe.page";
 import { faFloppyDisk, faPencil } from "@fortawesome/free-solid-svg-icons";
-import { SyntheticEvent, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import moment from "moment";
 import { moment_date_time_format } from "../../utils/moment.util";
 import { Tag } from "../../models/tag.model";
@@ -14,20 +14,81 @@ import { AuthContextType, useAuth } from "../../providers/authentification.provi
 import { NavigateFunction, useNavigate } from "react-router-dom";
 import LoaderSpinner from "../loader/loader_spinner.component";
 import TextInput from "../input/text_input.component";
+import Selecteur from "../input/selecteur.component";
+import { ParticipantGroupe } from "../../models/participant_groupe.model";
+import { toast } from "sonner";
 
-function DetailDepense({ depense, nom_participants, affiliations, tags, attribution_tags, suppression }: { depense: Depense, nom_participants: NomParticipant[], affiliations: AffiliationDepense[], tags: Tag[], attribution_tags: { fk_depense_id: number; fk_tag_id: number }[], suppression: Function }) {
+function DetailDepense({ depense, nom_participants, affiliations, tags, attribution_tags, suppression, participant_actuel, modifier_depense }: { depense: Depense, nom_participants: NomParticipant[], affiliations: AffiliationDepense[], tags: Tag[], attribution_tags: { fk_depense_id: number; fk_tag_id: number }[], suppression: Function, participant_actuel: ParticipantGroupe | null, modifier_depense: Function }) {
     const authentification: AuthContextType | null = useAuth();
     const navigate: NavigateFunction = useNavigate();
 
     const [est_modification, set_est_modification] = useState<boolean>(false);
+    const [chargement_modification, set_chargement_modification] = useState<boolean>(false);
     const [chargement_suppression, set_chargement_suppression] = useState<boolean>(false);
+
+    const [titre, set_titre] = useState<string | null>("");
+    const [montant, set_montant] = useState<number>(0);
+    const [participant_id_payeur, set_participant_id_payeur] = useState<string>("");
+    const [url_image, set_url_image] = useState<string | null>("");
+
+    const [messageur_erreur, set_messageur_erreur] = useState<string>("");
 
     const participant_createur: NomParticipant | undefined = nom_participants.find(
         (participant: NomParticipant) => participant.pk_participant_id === depense.fk_participant_createur_id
     );
 
+    useEffect(() => {
+        set_titre(depense.titre);
+        set_montant(depense.montant);
+        set_participant_id_payeur(depense.fk_participant_createur_id+"");
+        set_url_image(depense.lien_image ?? "");
+        set_est_modification(false);
+    }, [depense]);
+
+    useEffect(() => {
+        set_messageur_erreur("");
+    }, [titre, montant]);
+
     const switch_modification = () => {
         set_est_modification(!est_modification);
+    }
+
+    const modifier_depense_api = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (titre === "") {
+            set_messageur_erreur("Un titre doit être renseigné");
+            return;
+        }
+
+        if (montant === 0) {
+            set_messageur_erreur("Un montant doit être renseigné");
+            return;
+        }
+
+        const api_body = {
+            depense_id: depense.pk_depense_id,
+            titre: titre,
+            montant: Number(montant),
+            participant_payeur_id: Number(participant_id_payeur),
+            url_image: url_image
+        }
+
+        set_chargement_modification(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api("PUT", "/depense", api_body, authentification, navigate, true);
+
+        set_chargement_modification(false);
+      
+        if (reponse && 'data' in reponse) {
+            if ('message' in reponse.data)
+                toast.success(reponse.data.message);
+            else
+                toast.success("La dépense a bien été modifiée.");
+
+            modifier_depense(Depense.from_JSON(reponse.data.data));
+            set_est_modification(false);
+        }
     }
 
     const supprimer_depense_api = async (e: SyntheticEvent) => {
@@ -44,7 +105,7 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
             true
           );
 
-          set_chargement_suppression(false);
+        set_chargement_suppression(false);
       
         if (!reponse)
             return;
@@ -53,37 +114,81 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
     }
     
     return (
-        <div style={{ display: 'grid', gridTemplateRows: '60px auto 50px', height: '70vh', margin: '10px', padding: '10px', backgroundColor: 'white', borderRadius: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateRows: '70px auto 50px', height: '70vh', margin: '10px', padding: '10px', backgroundColor: 'white', borderRadius: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p>
-                    { depense.titre }
-                    <br />
-                    <span style={{ color: 'grey' }}>Ajouté le : </span>{ moment(depense.ajoute_le).format(moment_date_time_format) }
-                </p>
+                <div>
+                    <div style={{ height: '20px' }}></div>
+                    {
+                        est_modification ? (
+                            <div style={{ color: 'black' }}>
+                                <TextInput label="Titre" type='text' value={ titre } valeur_defaut={ titre ?? "Dépense n°" + depense.pk_depense_id } onChange={ (e: any) => set_titre(e.target.value) } />
+                            </div>
+                        ) : (
+                            <p>{ depense.titre ?? "Dépense n°" + depense.pk_depense_id }</p>
+                        )
+                    }
+                    <p style={{ color: 'grey' }}>Ajouté le : <span style={{ color: 'black' }}>{ moment(depense.ajoute_le).format(moment_date_time_format) }</span></p>
+                </div>
                 {
                     est_modification ?
                     <div style={{ display: 'flex', gap: '20px' }}>
                         <button className="lien" onClick={switch_modification}>Annuler</button>
-                        <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ modifier_depense_api }>
                             <FontAwesomeIcon icon={faFloppyDisk} />
                             Enregistrer
                         </button>
                     </div> :
-                    <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={switch_modification}>
-                        <FontAwesomeIcon icon={faPencil} />
-                        Modifier
-                    </button>
+                    <>
+                    {
+                        chargement_modification ?
+                        <button className="delete-button centre-centre" onClick={() => {}}>
+                            <LoaderSpinner />
+                            <p className="inline-block">&nbsp;Modification en cours</p>
+                        </button> :
+                        <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ participant_actuel != null && participant_actuel.peut_modifier_depense ? switch_modification : () => toast.warning("Vous n'avez pas les permissions pour modifier une dépense") }>
+                            <FontAwesomeIcon icon={faPencil} />
+                            Modifier
+                        </button>
+                    }
+                    </>
                 }
             </div>
             <div>
-            {
-                est_modification ?
                 <div>
-                    
-                </div> :
-                <div>
-                    <p style={{ color: 'grey' }}>Montant : <span style={{ color: 'black' }}>{ depense.montant.toFixed(2) } €</span></p>
-                    <p style={{ color: 'grey' }}>Payé par : <span style={{ color: 'black' }}>{ participant_createur ? participant_createur.nom : "Participant inconnu" }</span></p>
+                    <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '20px' }}>
+                        <p>Montant :</p>
+                        {
+                            est_modification ? (
+                                <div style={{ color: 'black' }}>
+                                    <TextInput label="Montant" value={ montant } valeur_defaut={ montant } onChange={ (e: any) => set_montant(e.target.value) } />
+                                </div>
+                            ) : (
+                                <span style={{ color: 'black' }}>{ depense.montant.toFixed(2) } €</span>
+                            )
+                        }
+                    </div>
+                    <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '20px' }}>
+                        <p>Payé par :</p>
+                        {
+                            est_modification ? (
+                                <div style={{ color: 'black' }}>
+                                    <Selecteur label="Payeur" options={ nom_participants.map((p: NomParticipant) => ({ value: p.pk_participant_id+"", label: p.nom ?? "Participant n°" + p.pk_participant_id })) } valeur_defaut={ participant_id_payeur+"" } changement={ set_participant_id_payeur } />
+                                </div>
+                            ) : (
+                                <span style={{ color: 'black' }}>{ participant_createur ? participant_createur.nom : "Participant inconnu" }</span>
+                            )
+                        }
+                    </div>
+                    {
+                        est_modification ? (
+                            <div style={{ color: 'grey', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '20px' }}>
+                                <p>URL de l'image :</p>
+                                <div style={{ color: 'black' }}>
+                                    <TextInput type="url" label="URL de l'image" value={ url_image } valeur_defaut={ url_image ?? "" } onChange={ (e: any) => set_url_image(e.target.value) } placeholder="https://..." style={{ width: '340px' }} />
+                                </div>
+                            </div>
+                        ) : (<></>)
+                    }
                     <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                         <p style={{ color: 'grey' }}>Tags : </p>
                         <div style={{ display: 'flex', gap: '10px' }}>
@@ -123,18 +228,22 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                         </div>
                     </div>
                 </div>
+                <p style={{ color: 'red', textAlign: 'center' }}>{ messageur_erreur }</p>
+            </div>
+            {
+                est_modification ? <></> : (
+                    <div className="centre">
+                        {
+                            chargement_suppression ?
+                            <button className="delete-button centre-centre" onClick={() => {}}>
+                                <LoaderSpinner />
+                                <p className="inline-block">&nbsp;Suppression en cours</p>
+                            </button> :
+                            <button className="delete-button" onClick={ participant_actuel != null && participant_actuel.peut_supprimer_depense ? supprimer_depense_api : () => toast.warning("Vous n'avez pas les permissions pour supprimer une dépense") }>Supprimer la dépense</button>
+                        }
+                    </div>
+                )
             }
-            </div>
-            <div className="centre">
-                {
-                    chargement_suppression ?
-                    <button className="delete-button centre-centre" onClick={() => {}}>
-                        <LoaderSpinner />
-                        <p className="inline-block">&nbsp;Suppression en cours</p>
-                    </button> :
-                    <button className="delete-button" onClick={ supprimer_depense_api }>Supprimer la dépense</button>
-                }
-            </div>
         </div>
     );
 }

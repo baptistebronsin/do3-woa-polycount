@@ -101,9 +101,9 @@ export const creer_depense: RequestHandler = async (req: Request, res: Response)
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;
 
-    const { groupe_id_param, titre, montant, url_image, participant_payeur_id, participants } = req.body;
+    const { groupe_id_param, titre, montant, url_image, participant_payeur_id, participants, tags } = req.body;
 
-    if (!["number"].includes(typeof groupe_id_param) || !["string"].includes(typeof titre) || titre == "" || (url_image != null && !["string"].includes(typeof url_image)) || !["number"].includes(typeof participant_payeur_id) || !["number"].includes(typeof montant) || !Array.isArray(participants))
+    if (!["number"].includes(typeof groupe_id_param) || !["string"].includes(typeof titre) || titre == "" || (url_image != null && !["string"].includes(typeof url_image)) || !["number"].includes(typeof participant_payeur_id) || !["number"].includes(typeof montant) || !Array.isArray(participants) || (tags != null && !Array.isArray(tags)))
         return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
             message: "Un ou plusieurs paramètres ne sont pas présent dans la requête.",
             parametres: [
@@ -112,7 +112,8 @@ export const creer_depense: RequestHandler = async (req: Request, res: Response)
                 { nom: "montant", type: "float", facultatif: false },
                 { nom: "url_image", type: "string", facultatif: true },
                 { nom: "participant_payeur_id", type: "number", facultatif: false },
-                { nom: "participants", type: "array", facultatif: false }
+                { nom: "participants", type: "array", facultatif: false },
+                { nom: "tags", type: "array", facultatif: true }
             ]
         });
 
@@ -212,6 +213,23 @@ export const creer_depense: RequestHandler = async (req: Request, res: Response)
             });
     });
 
+    let tags_existant: Tag[] = [];
+
+    try {
+        tags_existant = await depense_service.recuperer_tous_tags();
+    } catch (error) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération de tous les tags."
+        });
+    }
+
+    tags.map((t: number) => {
+        if(!tags_existant.find((tag_existant: Tag) => tag_existant.pk_tag_id == t))
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le tag n°" + t + " n'existe pas."
+            });
+    });
+
     let depense: Depense | null = null;
 
     try {
@@ -230,6 +248,17 @@ export const creer_depense: RequestHandler = async (req: Request, res: Response)
     } catch (error: PrismaClientKnownRequestError | any) {
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
             message: "Une erreur serveur est survenue lors de la liaison de la dépense avec les participants.",
+            erreur: error
+        });
+    }
+
+    try {
+        tags.map(async (t: number) => {
+            await depense_service.lier_depense_tags(depense.pk_depense_id, t);
+        });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la liaison de la dépense avec les tags.",
             erreur: error
         });
     }
@@ -648,15 +677,16 @@ export const modifier_depense: RequestHandler = async (req: Request, res: Respon
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;
 
-    const { depense_id, titre, montant, url_image } = req.body;
+    const { depense_id, titre, montant, participant_payeur_id, url_image } = req.body;
 
-    if (!["number"].includes(typeof depense_id) || !["string"].includes(typeof titre) || titre == "" || !["number"].includes(typeof montant) || (url_image && !["string"].includes(typeof url_image)))
+    if (!["number"].includes(typeof depense_id) || !["string"].includes(typeof titre) || titre == "" || !["number"].includes(typeof montant) || !["number"].includes(typeof participant_payeur_id) || (url_image && !["string"].includes(typeof url_image)))
         return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
             message: "Un ou plusieurs paramètres ne sont pas présent dans la requête.",
             parametres: [
                 { nom: "depense_id", type: "string", facultatif: false },
                 { nom: "titre", type: "string", facultatif: false },
                 { nom: "montant", type: "float", facultatif: false },
+                { nom: "participant_payeur_id", type: "number", facultatif: false },
                 { nom: "url_image", type: "string", facultatif: true }
             ]
         });
@@ -674,6 +704,11 @@ export const modifier_depense: RequestHandler = async (req: Request, res: Respon
     if (Number(montant) <= 0)
         return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
             message: "Le montant doit être supérieur à 0."
+        });
+
+    if (isNaN(Number(participant_payeur_id)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le participant_payeur_id doit être un nombre."
         });
 
     let utilisateur_existant: Utilisateur | null = null;
@@ -726,19 +761,19 @@ export const modifier_depense: RequestHandler = async (req: Request, res: Respon
         });
     }
 
-    let participants_existant: Participant_Groupe | null = null;
+    let participant_existant: Participant_Groupe | null = null;
 
     try {
         const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_existant.pk_groupe_id);
 
-        participants_existant = participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id);
+        participant_existant = participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_id);
 
-        if (!participants_existant)
+        if (!participant_existant)
             return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
                 message: "Vous n'êtes pas affilié à ce groupe."
             });
 
-        if (participants_existant.quitte_le != null)
+        if (participant_existant.quitte_le != null)
             return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
                 message: "Vous avez quitté ce groupe."
             });
@@ -749,31 +784,49 @@ export const modifier_depense: RequestHandler = async (req: Request, res: Respon
         });
     }
 
-    if (!participants_existant.peut_modifier_depense)
+    if (!participant_existant.peut_modifier_depense)
         return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
             message: "Vous n'avez pas les permissions pour modifier une dépense dans ce groupe."
         });
 
-    let depenses_groupe: Depense[] = [];
+    let affiliations_depense: Participant_Groupe_Liee_Depense[] = [];
 
     try {
-        depenses_groupe = await depense_service.recuperer_toutes_depenses(groupe_existant.pk_groupe_id);
+        affiliations_depense = await depense_service.recuperer_toutes_affiliations_depenses(groupe_existant.pk_groupe_id);
     } catch (error) {
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({ 
-            message: "Une erreur serveur est survenue lors de la récupération des dépenses du groupe.",
+            message: "Une erreur serveur est survenue lors de la récupération des affiliations à la dépense du groupe.",
             erreur: error
         });
     }
 
-    if (depenses_groupe.filter((d: Depense) => d.montant != null).reduce((somme: number, d: Depense) => somme + d.montant, 0) > Number(montant))
+    if (affiliations_depense.filter((aff: Participant_Groupe_Liee_Depense) => aff.fk_depense_id == depense_existante.pk_depense_id).reduce((somme: number, aff: Participant_Groupe_Liee_Depense) => somme + aff.montant ?? 0, 0) > Number(montant))
         return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
             message: "Le montant de la dépense ne peut pas être inférieur à la somme des montants des autres dépenses du groupe."
         });
 
+    let participant_payeur: Participant_Groupe | null = null;
+
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_existant.pk_groupe_id);
+
+        participant_payeur = participants.find((participant: Participant_Groupe) => participant.pk_participant_groupe_id == Number(participant_payeur_id));
+
+        if (!participant_payeur)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le participant payeur n'existe pas."
+            });
+    } catch (error) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({ 
+            message: "Une erreur serveur est survenue lors de la récupération des participants du groupe.",
+            erreur: error
+        });
+    }
+
     let depense_modifiee: Depense | null = null;
 
     try {
-        depense_modifiee = await depense_service.modifier_depense(depense_id, titre, montant, url_image);
+        depense_modifiee = await depense_service.modifier_depense(depense_id, titre, montant, participant_payeur.pk_participant_groupe_id, url_image);
     } catch (error: PrismaClientKnownRequestError | any) {
         return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({ 
             message: "Une erreur serveur est survenue lors de la modification de la dépense.",

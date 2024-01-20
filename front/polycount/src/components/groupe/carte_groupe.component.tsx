@@ -46,7 +46,7 @@ const CarteGroupe: React.FC<CarteGroupeProps> = ({ groupe }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '10px' }}>
                 {
                     groupe.lien_image ?
-                    <img src={groupe.lien_image} alt={`groupe partagé numéro ${groupe.pk_groupe_id}`} /> :
+                    <img src={groupe.lien_image} alt={`groupe partagé numéro ${groupe.pk_groupe_id}`} className="img-80" /> :
                     <div style={{ background: 'linear-gradient(135deg, #4B7BB4, #225292)', height: '80px', borderRadius: '6px' }}></div>
                 }
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

@@ -12,8 +12,10 @@ import requete_api from "../../utils/requete_api.util";
 import { NavigateFunction, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Depense } from "../../models/depense.model";
+import { Tag } from "../../models/tag.model";
+import PastilleTag from "../tag/pastille_tag.component";
 
-function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participants, participant_actuel }: { groupe_id: number, annulation: Function, ajouter_depense: Function, nom_participants: NomParticipant[], participant_actuel: ParticipantGroupe }) {
+function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participants, participant_actuel, tags, ajouter_affiliations, ajouter_tags }: { groupe_id: number, annulation: Function, ajouter_depense: Function, nom_participants: NomParticipant[], participant_actuel: ParticipantGroupe, tags: Tag[], ajouter_affiliations: Function, ajouter_tags: Function }) {
     const navigate: NavigateFunction = useNavigate();
     const authentification: AuthContextType | null = useAuth();
 
@@ -22,9 +24,10 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
     const [url_image, set_url_image] = useState<string>("");
     const [participant_id_payeur, set_participant_id_payeur] = useState<string>(participant_actuel.pk_participant_groupe_id+"");
     const [participants, set_participants] = useState<NomParticipant[]>([]);
-
+    const [tags_depense, set_tags_depense] = useState<Tag[]>([]);
 
     const [participants_selecteur, set_participants_selecteur] = useState<NomParticipant[]>([{ pk_participant_id: -1, nom: "Veuillez sectionner un participant" }, ...nom_participants]);
+    const [tags_selecteur, set_tags_selecteur] = useState<Tag[]>([{ pk_tag_id: -1, titre: "Veuillez sectionner un tag", couleur: "", icon: "" }, ...tags]);
     const [montant_partage_null, set_montant_partage_null] = useState<number>(0);
     const [montants_partages, set_montants_partages] = useState<{ [key: string]: number }>({});
 
@@ -44,8 +47,8 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
     // On recalcule le montant partagé si un participant est ajouté ou supprimé
     useEffect(() => {
         let struct: any = {...montants_partages};
-        Object.keys(montants_partages).map((key: string) => {
-            if (!participants.find((p: NomParticipant) => p.pk_participant_id == parseInt(key)) && participant_actuel.pk_participant_groupe_id !== parseInt(key)) {
+        Object.keys(montants_partages).forEach((key: string) => {
+            if (!participants.find((p: NomParticipant) => p.pk_participant_id === parseInt(key)) && participant_actuel.pk_participant_groupe_id !== parseInt(key)) {
                 delete struct[key];
             }
         });
@@ -66,16 +69,37 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             const montant_partage_arrondi: number = Math.round(montant_partage * 100) / 100;
 
             set_montant_partage_null(montant_partage_arrondi);
-        } else if (montant == 0) {
+        } else if (montant === 0) {
             set_montant_partage_null(0);
         }
     }
 
+    const ajouter_tag = (id: string) => {
+        const tag: Tag | undefined = tags_selecteur.filter((t: Tag) => t.pk_tag_id === parseInt(id))[0];
+
+        if (tag) {
+            set_tags_depense([...tags_depense, tag]);
+            const nouvelle_liste: Tag[] = [...tags_selecteur].filter((t: Tag) => t.pk_tag_id !== tag.pk_tag_id);
+            set_tags_selecteur(nouvelle_liste);
+        }
+    }
+
+    const supprimer_tag = (id: number) => {
+        const tag: Tag | undefined = tags_depense.find((t: Tag) => t.pk_tag_id === id);
+
+        if (tag) {
+            const nouvelles_liste_tags: Tag[] = [...tags_depense].filter((t: Tag) => t.pk_tag_id !== tag.pk_tag_id);
+            set_tags_depense(nouvelles_liste_tags);
+            const nouvelle_liste_selecteur: Tag[] = [...tags_selecteur, tag];
+            set_tags_selecteur(nouvelle_liste_selecteur);
+        }
+    }
+
     const ajouter_participant_depuis_selecteur = (id: string) => {
-        const participant: NomParticipant | undefined = nom_participants.filter((p: NomParticipant) => p.pk_participant_id == parseInt(id))[0];
+        const participant: NomParticipant | undefined = nom_participants.filter((p: NomParticipant) => p.pk_participant_id === parseInt(id))[0];
         if (participant) {
             set_participants([...participants, participant]);
-            const nouvelle_liste: NomParticipant[] = [...participants_selecteur].filter((p: NomParticipant) => p.pk_participant_id != participant.pk_participant_id);
+            const nouvelle_liste: NomParticipant[] = [...participants_selecteur].filter((p: NomParticipant) => p.pk_participant_id !== participant.pk_participant_id);
             set_participants_selecteur(nouvelle_liste);
         }
     };
@@ -84,14 +108,14 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
         const participant: NomParticipant | undefined = nom_participants.find((p: NomParticipant) => p.pk_participant_id === id);
 
         if (participant) {
-            const nouvelles_liste_participants: NomParticipant[] = [...participants].filter((p: NomParticipant) => p.pk_participant_id != participant.pk_participant_id);
+            const nouvelles_liste_participants: NomParticipant[] = [...participants].filter((p: NomParticipant) => p.pk_participant_id !== participant.pk_participant_id);
             set_participants(nouvelles_liste_participants);
             const nouvelle_liste_selecteur: NomParticipant[] = [...participants_selecteur, participant];
             set_participants_selecteur(nouvelle_liste_selecteur);
         }
     }
 
-     const creer_depense_api = async (e: SyntheticEvent) => {
+    const creer_depense_api = async (e: SyntheticEvent) => {
         e.preventDefault();
 
         if (nom_depense === "") {
@@ -104,7 +128,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             return null;
         }
 
-        if (montant == 0) {
+        if (montant === 0) {
             set_message_erreur("Veuillez saisir un montant de dépense.");
             return null;
         }
@@ -114,7 +138,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             return null;
         }
 
-        Object.keys(montants_partages).map((key: string) => {
+        Object.keys(montants_partages).forEach((key: string) => {
             if (montants_partages[key] < 0) {
                 set_message_erreur("Veuillez saisir un montant positif pour chaque participant.");
                 return null;
@@ -126,7 +150,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             return null;
         }
 
-        if (Object.keys(montants_partages).reduce((sum: number, key: string) => sum + montants_partages[key], 0) < montant && Object.keys(montants_partages).length == participants.length + 1) {
+        if (Object.keys(montants_partages).reduce((sum: number, key: string) => sum + montants_partages[key], 0) < montant && Object.keys(montants_partages).length === participants.length + 1) {
             set_message_erreur("La somme des montants des participants est inférieur au montant de la dépense.");
             return null;
         }
@@ -135,16 +159,17 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
             (p: NomParticipant) => ({ fk_participant_groupe_id: p.pk_participant_id, montant: montants_partages[p.pk_participant_id+""] ?? null })
         )];
 
+        const tags_api: number[] = tags_depense.map((t: Tag) => t.pk_tag_id);
+
         const api_body: any = {
             groupe_id_param: groupe_id,
             titre: nom_depense,
             montant: Number(montant),
             url_image: url_image,
             participant_payeur_id: Number(participant_id_payeur),
-            participants: participants_affiliations
+            participants: participants_affiliations,
+            tags: tags_api
         };
-
-        console.table(api_body);
 
         set_chargement(true);
 
@@ -159,13 +184,15 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
                 toast.success("La dépense a bien été créée.");
 
             ajouter_depense(Depense.from_JSON(reponse.data.data), participants_affiliations.map((p: any) => ({ fk_participant_groupe_id: p.fk_participant_groupe_id, fk_depense_id: reponse.data.data.pk_depense_id, montant: p.montant })));
+            ajouter_affiliations(participants_affiliations.map((p: any) => ({ fk_participant_groupe_id: p.fk_participant_groupe_id, fk_depense_id: reponse.data.data.pk_depense_id, montant: p.montant })));
+            ajouter_tags(tags_depense.map((t: Tag) => ({ fk_depense_id: reponse.data.data.pk_depense_id, fk_tag_id: t.pk_tag_id })));
             annulation(false);
         }
-     }
+    }
 
     return (
         <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(128, 128, 128, 0.8)', zIndex: 9 }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '500px' : '470px', zIndex: 10, padding: "10px 20px", borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '540px' : '510px', zIndex: 10, padding: "10px 20px", borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <h1>Création d'une dépense</h1>
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -204,6 +231,21 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
                             <label>Payé par :&nbsp;</label>
                             <Selecteur label="Payeur" options={ nom_participants.map((p: NomParticipant) => ({ value: p.pk_participant_id + "", label: p.nom ?? "participant n°" + p.pk_participant_id })) } valeur_defaut={ participant_id_payeur + "" } changement={ set_participant_id_payeur } />
                         </div>
+                        <div style={{ height: '20px' }}></div>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <label>Tags :&nbsp;</label>
+                                <Selecteur label="Tags" options={ tags_selecteur.length > 1 ? tags_selecteur.map((t: Tag) => ({ value: t.pk_tag_id + "", label: t.titre })) : [{ value: "0", label: "Aucun autre tag disponible" }] } valeur_defaut={ tags_selecteur[0].pk_tag_id + "" } changement={ ajouter_tag } />
+                            </div>
+                            <div style={{ height: '10px' }}></div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                            {
+                                tags_depense.length === 0 ?
+                                <p>Aucun tag sélectionné</p> :
+                                tags_depense.map((t: Tag) => <div className="hover" onClick={ () => supprimer_tag(t.pk_tag_id) }><PastilleTag tag={ t } /></div>)
+                            }
+                            </div>
+                        </div>
                     </div>
                     <div style={{ borderLeft: '1px solid #8E8E8E', maxHeight: '340px' }}></div>
                     <div>
@@ -213,7 +255,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
                             <hr style={{ marginTop: '10px 0' }} />
                             <div style={{ overflow: 'auto', height: '270px', paddingRight: '10px' }}>
                                 {
-                                    participants.length == 0 ? (
+                                    participants.length === 0 ? (
                                     <>
                                         <p className="centre-centre">Aucun participant selectionné</p>
                                     </>
