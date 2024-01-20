@@ -512,7 +512,7 @@ export const quitter_participant: RequestHandler = async (req: Request, res: Res
             message: "Le participant_groupe_id doit être un nombre."
         });
 
-        let utilisateur_existant: Utilisateur | null = null;
+    let utilisateur_existant: Utilisateur | null = null;
 
     // On cherche l'utilisateur par son id avec son token JWT
     try {
@@ -593,6 +593,198 @@ export const quitter_participant: RequestHandler = async (req: Request, res: Res
             ...participant_quitte,
             rejoint_le: participant_quitte.rejoint_le ? moment(participant_quitte.rejoint_le).format(moment_date_time_format) : null,
             quitte_le: participant_quitte.quitte_le ? moment(participant_quitte.quitte_le).format(moment_date_time_format) : null,
+        }
+    });
+}
+
+export const associer_compte_participant_fictif: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const type_token: string = "Pol03";
+
+    const { participant_groupe_id, email } = req.body;
+
+    if (!["number"].includes(typeof participant_groupe_id) || !["string"].includes(typeof email))
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "participant_groupe_id", type: "number", facultatif: false },
+                { nom: "email", type: "string", facultatif: false }
+            ]
+        });
+
+    const email_formate: string = email.toLowerCase();
+
+    if (isNaN(Number(participant_groupe_id)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le participant_groupe_id doit être un nombre."
+        });
+
+    if (!email_valide(email_formate))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Veuillez saisir une adresse email correcte."
+        });
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let participant_existant: Participant_Groupe | null = null;
+
+    try {
+        participant_existant = await groupe_service.recuperer_participant(Number(participant_groupe_id));
+
+        if (!participant_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun participant trouvé."
+            }); 
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données du participant.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(participant_existant.fk_groupe_id);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe du participant n'a pas été retrouvé."
+            }); 
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données du groupe du participant.",
+            erreur: error
+        });
+    }
+
+    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Seul l'administrateur du groupe partagé peut associer des utilisateurs aux participants de son groupe."
+        });
+
+    if (participant_existant.fk_utilisateur_id != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Le participant est déjà associé à un utilisateur."
+        });
+
+    if (participant_existant.quitte_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Le participant a été exclu du groupe de dépense."
+        });
+
+    let utilisateur_existant_email: Utilisateur | null = null;
+
+    try {
+        utilisateur_existant_email = await utilisateur_service.recuperer_utilisateur_par_email(email_formate);
+
+        if (!utilisateur_existant_email)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Aucun utilisateur n'a été trouvé avec cet email."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des informations d'un utilisateur.",
+            erreur: error
+        });
+    }
+
+    try {
+        const participants: Participant_Groupe[] = await groupe_service.recuperer_participants(groupe_existant.pk_groupe_id);
+
+        if (participants.find((participant: Participant_Groupe) => participant.fk_utilisateur_id == utilisateur_existant_email.pk_utilisateur_id))
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "L'utilisateur est déjà affilié à ce groupe."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de la récupération des participants du groupe partagé.",
+                erreur: error
+            });
+    }
+
+    let participant_modifie: Participant_Groupe | null = null;
+
+    try {
+        participant_modifie = await groupe_service.modifier_participant(participant_existant.pk_participant_groupe_id, null, participant_existant.peut_creer_depense, participant_existant.peut_modifier_depense, participant_existant.peut_supprimer_depense, participant_existant.peut_manipuler_tag, participant_existant.peut_modifier_montant_max_depense, participant_existant.montant_max_depense);
+    
+        if (!participant_modifie)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le participant n'a pas pas pu être modifié."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de la modification du participant.",
+                erreur: error
+            });
+    }
+
+    try {
+        participant_modifie = await groupe_service.associer_utilisateur_a_participant(participant_modifie.pk_participant_groupe_id, utilisateur_existant_email.pk_utilisateur_id);
+
+        if (!participant_modifie)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le participant n'a pas pas pu être modifié."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de la modification du participant.",
+                erreur: error
+            });
+    }
+
+    const token: string = crypto.randomBytes(100).toString('hex');
+
+    try {
+        await utilisateur_service.ajouter_token(utilisateur_existant.pk_utilisateur_id, token, type_token, temps_validation[type_token]);
+    } catch (error) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la création du token.",
+            erreur: error
+        });
+    }
+
+    const lien: string = process.env.APP_URL! + "/invitation-groupe?type=EMAIL&participant_id=" + participant_existant.pk_participant_groupe_id + "&token=" + token + "&groupe_token=" + groupe_existant.cree_le.getTime();
+
+    const mail = mail_utils.contenu.mail_invitation_groupe;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant_email.genre)).replace(" $_NOM_$", (utilisateur_existant_email.genre ? " " + utilisateur_existant_email.nom : utilisateur_existant_email.prenom)).replace("$_NOM_GROUPE_$", groupe_existant.nom).replace("$_PRENOM_INVITEUR_$", utilisateur_existant.prenom).replace("$_NOM_INVITEUR_$", utilisateur_existant.nom).replace("$_URL_TOKEN_$", lien).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const etat_mail: boolean = await envoyer_mail(utilisateur_existant_email.email, mail.entete, contenu_mail);
+
+    if (!etat_mail)
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue de l'envoi du mail de bienvenue."
+        });
+
+    const utilisateur_formate: any = {
+        pk_utilisateur_id: utilisateur_existant_email.pk_utilisateur_id,
+        nom: utilisateur_existant_email.nom,
+        prenom: utilisateur_existant_email.prenom,
+        genre: utilisateur_existant_email.genre,
+        email: utilisateur_existant_email.email
+    };
+
+    return res.status(http_response_util.statuts.succes.ok).json({
+        message: "un mail d'invitation a bien été envoyé.",
+        data: {
+            participant: participant_modifie,
+            utilisateur: utilisateur_formate
         }
     });
 }

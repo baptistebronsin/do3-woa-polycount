@@ -11,6 +11,7 @@ groupe_router.get('/:groupe_id_param/participants', authentification, groupe_con
 groupe_router.put('/participant/creer', authentification, groupe_controller.creer_participant_fictif);
 groupe_router.patch('/participant/modifier', authentification, groupe_controller.modifier_participant);
 groupe_router.patch('/participant/quitter', authentification, groupe_controller.quitter_participant);
+groupe_router.post('/participant/association_utilisateur_fictif', authentification, groupe_controller.associer_compte_participant_fictif);
 groupe_router.post('/participant/email/verification', groupe_controller.ajouter_participant_email_verification);
 groupe_router.post('/participant/email', authentification, groupe_controller.ajouter_participant_email);
 groupe_router.put('/participant/email/verification/detail', groupe_controller.recuperer_groupe_email_verification);

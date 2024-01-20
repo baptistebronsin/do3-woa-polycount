@@ -96,6 +96,19 @@ export const quitter_participant = async (participant_id: number): Promise<Parti
     return result;
 }
 
+export const associer_utilisateur_a_participant = async (participant_id: number, utilisateur_id: number): Promise<Participant_Groupe> => {
+    const result: Participant_Groupe = await prisma.participant_Groupe.update({
+        data: {
+            fk_utilisateur_id: utilisateur_id
+        },
+        where: {
+            pk_participant_groupe_id: participant_id
+        }
+    });
+
+    return result;
+}
+
 export const recuperer_participants = async (groupe_id: number): Promise<Participant_Groupe[]> => {
     const result: Participant_Groupe[] = await prisma.participant_Groupe.findMany({
         where: {

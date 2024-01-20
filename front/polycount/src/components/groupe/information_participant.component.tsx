@@ -54,7 +54,7 @@ function InformationParticipant ({ groupe, participants, utilisateurs, nom_parti
                             <div style={{ height: '50px' }}></div>
                         </div>
                         <div>
-                            <GrandeCarteParticipant groupe={ groupe } participant={ participant_selectionne } nom_participants={ nom_participants } utilisateurs={ utilisateurs } participant_actuel={ participant_actuel } modification_participant={ modification_participant } />
+                            <GrandeCarteParticipant groupe={ groupe } participant={ participant_selectionne } nom_participants={ nom_participants } utilisateurs={ utilisateurs } participant_actuel={ participant_actuel } modification_participant={ modification_participant } ajouter_utilisateur={ ajouter_utilisateur } />
                         </div>
                     </div>
                 ): (
@@ -128,7 +128,7 @@ function PetiteCarteParticipant ({ groupe, participant, nom_participants, utilis
     )
 }
 
-function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilisateurs, participant_actuel, modification_participant }: { groupe: Groupe, participant: ParticipantGroupe, nom_participants: NomParticipant[], utilisateurs: Utilisateur[], participant_actuel: ParticipantGroupe, modification_participant: Function }) {
+function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilisateurs, participant_actuel, modification_participant, ajouter_utilisateur }: { groupe: Groupe, participant: ParticipantGroupe, nom_participants: NomParticipant[], utilisateurs: Utilisateur[], participant_actuel: ParticipantGroupe, modification_participant: Function, ajouter_utilisateur: Function }) {
     const navigate: NavigateFunction = useNavigate();
     const authentification: AuthContextType | null = useAuth();
 
@@ -138,6 +138,7 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
     const statut: string = groupe.fk_utilisateur_createur_id === utilisateur?.pk_utilisateur_id ? "Administrateur" : utilisateurs.find((u: Utilisateur) => u.pk_utilisateur_id === participant.fk_utilisateur_id) ? "Participant" : "Participant fictif";
 
     const [est_modification, set_est_modification] = useState<boolean>(false);
+    const [est_association_participant, set_est_association_participant] = useState<boolean>(false);
 
     const [nom_participant_modif, set_nom_participant_modif] = useState<string>("");
 
@@ -148,10 +149,22 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
     const [modification_montant_max, set_modification_montant_max] = useState<'true' | 'false'>('true');
     const [montant_max, set_montant_max] = useState<string>("");
 
+    const [email_participant_fictif, set_email_participant_fictif] = useState<string>("");
+
     const [chargement_modification, set_chargement_modification] = useState<boolean>(false);
     const [chargement_suppression, set_chargement_suppression] = useState<boolean>(false);
+    const [chargement_envoi_mail_participant_fictif, set_chargement_envoi_mail_participant_fictif] = useState<boolean>(false);
 
     const [message_erreur, set_message_erreur] = useState<string>("");
+    const [message_erreur_email, set_message_erreur_email] = useState<string>("");
+
+    useEffect(() => {
+        set_message_erreur_email("");
+    }, [email_participant_fictif]);
+
+    useEffect(() => {
+        set_message_erreur("");
+    }, [nom_participant_modif, montant_max]);
 
     useEffect(() => {
         set_est_modification(false);
@@ -251,6 +264,36 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
         }
     }
 
+    const envoyer_invitation_api = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (email_participant_fictif === "") {
+            set_message_erreur_email("Veuillez spécifier une adresse email valide.");
+            return ;
+        }
+
+        const api_body: any = {
+            participant_groupe_id: participant.pk_participant_groupe_id,
+            email: email_participant_fictif
+        };
+
+        set_chargement_envoi_mail_participant_fictif(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/groupe/participant/association_utilisateur_fictif", api_body, authentification, navigate, true);
+        
+        set_chargement_envoi_mail_participant_fictif(false);
+
+        if (reponse && 'data' in reponse) {
+            if ('message' in reponse.data)
+                toast.success(reponse.data.message);
+            else
+                toast.success("L'invitation a bien été envoyée.");
+
+            modification_participant(ParticipantGroupe.from_JSON(reponse.data.data.participant));
+            ajouter_utilisateur(Utilisateur.from_JSON(reponse.data.data.utilisateur));
+        }
+    }
+
     return (
         <div style={{ backgroundColor: 'white', borderRadius: '10px', width: '100%', margin: '20px 0', padding: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -307,7 +350,7 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
                             <p style={{ color: 'grey' }}>Nom : <span style={{ color: 'black' }}>{ utilisateur.nom }</span></p>
                             <p style={{ color: 'grey' }}>Prénom : <span style={{ color: 'black' }}>{ utilisateur.prenom }</span></p>
                             <p style={{ color: 'grey' }}>Email : <span style={{ color: 'black' }}>{ utilisateur.email }</span></p>
-                            <p style={{ color: 'grey' }}>Rejoint le groupe le : <span style={{ color: 'black' }}>{ moment(participant.rejoint_le).format(moment_date_format) }</span></p>
+                            <p style={{ color: 'grey' }}>Rejoint le groupe le : <span style={{ color: 'black' }}>{ participant.rejoint_le ? moment(participant.rejoint_le).format(moment_date_format) : "Invitation envoyée" }</span></p>
                             {
                                 participant.quitte_le ?
                                 <p style={{ color: 'grey' }}>Quitté le groupe le : <span style={{ color: 'black' }}>{ moment(participant.quitte_le).format(moment_date_format) }</span></p> : <></>
@@ -387,7 +430,7 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
                         <p style={{ color: 'grey' }}>Informations utilisateur : <span style={{ color: 'black' }}>Inexistant</span></p>
                         {
                             groupe.fk_utilisateur_createur_id === participant_actuel.fk_utilisateur_id && participant.quitte_le === null ?
-                            <button className="lien">Associer un utilisateur</button> : <></>
+                            <button className="lien" onClick={ () => set_est_association_participant(true) }>Associer un utilisateur</button> : <></>
                         }
                     </>
                     )
@@ -411,6 +454,44 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
                 ) : <></>
             }
             <p style={{ color: 'red', textAlign: 'center' }}>{ message_erreur }</p>
+            {
+                    est_association_participant ? (
+                        <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(128, 128, 128, 0.8)', zIndex: 9 }}>
+                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '530px' : '500px', zIndex: 10, padding: "10px 20px", borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <h1>Association d'un participant fictif à un utilisateur</h1>
+                                    <button className="lien" onClick={ () => set_est_association_participant(false) }>Annuler</button>
+                                </div>
+                                <div style={{ height: '50px' }}></div>
+                                <div className="centre">
+                                    <p style={{ width: '70%', textAlign: 'center' }}>Envoyer une invitation par mail à un utilisateur existant dans la base de données Polycount et qu'il prenne la place de ce participant fictif.</p>
+                                </div>
+                                <div style={{ height: '30px' }}></div>
+                                <div className="centre">
+                                    <TextInput label="Email" value={ email_participant_fictif } longueur_max={250} onChange={(e: any) => set_email_participant_fictif(e.target.value)} style={{ width: '500px' }} />
+                                </div>
+                                <div style={{ height: '30px' }}></div>
+                                <div className="centre">
+                                    {
+                                        chargement_envoi_mail_participant_fictif ?
+                                        <button className="full-button centre-centre" onClick={() => {}}>
+                                            <LoaderSpinner />
+                                            <p className="inline-block">&nbsp;Envoie en cours</p>
+                                        </button> :
+                                        <button className="full-button" onClick={ envoyer_invitation_api }>Envoyer l'invitation</button>
+                                    }
+                                </div>
+                                {
+                                    message_erreur_email ?
+                                    <>
+                                        <div style={{ height: '30px' }}></div>
+                                        <p style={{ color: 'red', textAlign: 'center' }}>{ message_erreur_email }</p>
+                                    </> : <></>
+                                }
+                            </div>
+                        </div>
+                    ) : (<></>)
+            }
         </div>
     );
 }
@@ -467,7 +548,6 @@ function AjoutEmail ({ groupe, authentification, navigate, ajouter_participant, 
         e.preventDefault();
 
         if (email === "") {
-            set_chargement(false);
             set_message_erreur("Veuillez renseigner une adresse email.");
             return;
         }
@@ -496,7 +576,7 @@ function AjoutEmail ({ groupe, authentification, navigate, ajouter_participant, 
 
     return (
         <div>
-            <p className="centre">Envoyer une invitation par mail à un participant existant dans la base de données Polycount.</p>
+            <p className="centre">Envoyer une invitation par mail à un utilisateur existant dans la base de données Polycount.</p>
             <div style={{ height: '30px' }}></div>
             <div className="centre">
                 <TextInput label="Email" value={ email } longueur_max={250} onChange={(e: any) => set_email(e.target.value)} style={{ width: '500px' }} />
