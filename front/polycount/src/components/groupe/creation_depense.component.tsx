@@ -19,9 +19,12 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
 
     const [nom_depense, set_nom_depense] = useState<string>("");
     const [montant, set_montant] = useState<number>(0);
+    const [url_image, set_url_image] = useState<string>("");
+    const [participant_id_payeur, set_participant_id_payeur] = useState<string>(participant_actuel.pk_participant_groupe_id+"");
     const [participants, set_participants] = useState<NomParticipant[]>([]);
 
-    const [participants_selecteur, set_participants_selecteur] = useState<NomParticipant[]>([{ pk_participant_id: -1, nom: "Veuillez sectionner un participant" }, ...[...nom_participants].filter((p: NomParticipant) => p.pk_participant_id != participant_actuel.pk_participant_groupe_id)]);
+
+    const [participants_selecteur, set_participants_selecteur] = useState<NomParticipant[]>([{ pk_participant_id: -1, nom: "Veuillez sectionner un participant" }, ...nom_participants]);
     const [montant_partage_null, set_montant_partage_null] = useState<number>(0);
     const [montants_partages, set_montants_partages] = useState<{ [key: string]: number }>({});
 
@@ -30,7 +33,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
 
     // Affiche les options du sélecteur de participants
     useEffect(() => {
-        set_participants_selecteur([{ pk_participant_id: -1, nom: "Veuillez sectionner un participant" }, ...[...nom_participants].filter((p: NomParticipant) => p.pk_participant_id != participant_actuel.pk_participant_groupe_id)]);
+        set_participants_selecteur([{ pk_participant_id: -1, nom: "Veuillez sectionner un participant" }, ...nom_participants]);
     }, [nom_participants]);
 
     // On recalcule le montant partagé si le montant global ou un montant personnalisé est modifié
@@ -59,7 +62,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
 
     const calculer_montant_partage = (montants: { [key: string]: number }) => {
         if (montant > 0) {
-            const montant_partage: number = (montant - Object.keys(montants).reduce((sum: number, key: string) => sum + montants[key], 0)) / (participants.length + 1 - Object.keys(montants).filter((key: string) => montants[key] > 0).length);
+            const montant_partage: number = (montant - Object.keys(montants).reduce((sum: number, key: string) => sum + montants[key], 0)) / (participants.length - Object.keys(montants).filter((key: string) => montants[key] >= 0).length);
             const montant_partage_arrondi: number = Math.round(montant_partage * 100) / 100;
 
             set_montant_partage_null(montant_partage_arrondi);
@@ -78,7 +81,7 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
     };
 
     const supprimer_participant_depuis_selecteur = (id: number) => {
-        const participant: NomParticipant | undefined = nom_participants.find((p: NomParticipant) => p.pk_participant_id == id);
+        const participant: NomParticipant | undefined = nom_participants.find((p: NomParticipant) => p.pk_participant_id === id);
 
         if (participant) {
             const nouvelles_liste_participants: NomParticipant[] = [...participants].filter((p: NomParticipant) => p.pk_participant_id != participant.pk_participant_id);
@@ -130,14 +133,18 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
 
         const participants_affiliations = [...participants.map(
             (p: NomParticipant) => ({ fk_participant_groupe_id: p.pk_participant_id, montant: montants_partages[p.pk_participant_id+""] ?? null })
-        ), { fk_participant_groupe_id: participant_actuel.pk_participant_groupe_id, montant: montants_partages[participant_actuel.pk_participant_groupe_id+""] ?? null }];
+        )];
 
         const api_body: any = {
             groupe_id_param: groupe_id,
             titre: nom_depense,
             montant: Number(montant),
+            url_image: url_image,
+            participant_payeur_id: Number(participant_id_payeur),
             participants: participants_affiliations
         };
+
+        console.table(api_body);
 
         set_chargement(true);
 
@@ -186,35 +193,47 @@ function CreationDepense({ groupe_id, annulation, ajouter_depense, nom_participa
                                 <p>&nbsp;€</p>
                             </div>
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <label>URL de l'image :&nbsp;</label>
+                            <TextInput type="url" label="URL de l'image" value={url_image} onChange={ (e: any) => set_url_image(e.target.value) } placeholder="https://..." style={{ width: '340px' }} />
+                        </div>
+                        <div style={{ height: '20px' }}></div>
+                        <hr />
+                        <div style={{ height: '20px' }}></div>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <label>Payé par :&nbsp;</label>
+                            <Selecteur label="Payeur" options={ nom_participants.map((p: NomParticipant) => ({ value: p.pk_participant_id + "", label: p.nom ?? "participant n°" + p.pk_participant_id })) } valeur_defaut={ participant_id_payeur + "" } changement={ set_participant_id_payeur } />
+                        </div>
                     </div>
                     <div style={{ borderLeft: '1px solid #8E8E8E', maxHeight: '340px' }}></div>
                     <div>
-                        <Selecteur label="Participants" options={ participants_selecteur.length > 1 ? participants_selecteur.filter((p: NomParticipant) => p.pk_participant_id != participant_actuel.pk_participant_groupe_id).map((p: NomParticipant) => ({ value: p.pk_participant_id + "", label: p.nom ?? "participant n°" + p.pk_participant_id })) : ( participants.length > 1 ? [{ value: "0", label: "Plus de participant disponible" }] : [{ value: "0", label: "Aucun participant" }]) } valeur_defaut={ participants_selecteur.length > 1 ? participants_selecteur.filter((p: NomParticipant) => p.pk_participant_id != participant_actuel.pk_participant_groupe_id).map((p: NomParticipant) => p.pk_participant_id + "")[0] : "0" } changement={ ajouter_participant_depuis_selecteur } />
+                        <Selecteur label="Participants" options={ participants_selecteur.length > 1 ? participants_selecteur.map((p: NomParticipant) => ({ value: p.pk_participant_id + "", label: p.nom ?? "participant n°" + p.pk_participant_id })) : ( participants.length > 1 ? [{ value: "0", label: "Plus de participant disponible" }] : [{ value: "0", label: "Aucun participant" }]) } valeur_defaut={ participants_selecteur.length > 1 ? participants_selecteur.map((p: NomParticipant) => p.pk_participant_id + "")[0] : "0" } changement={ ajouter_participant_depuis_selecteur } />
                         <div>
                             <h3 style={{ margin: '10px 0' }}>Participants ajoutés</h3>
                             <hr style={{ marginTop: '10px 0' }} />
                             <div style={{ overflow: 'auto', height: '270px', paddingRight: '10px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', margin: '30px 0' }}>
-                                    <p>{ authentification ? authentification.authentification.utilisateur?.prenom + " " + authentification.authentification.utilisateur?.nom[0] + "." : "Participant n°" + participant_actuel.pk_participant_groupe_id }</p>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                            <TextInput type="number" label="montant personnalisé" placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[participant_actuel.pk_participant_groupe_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
-                                        </div>
-                                        <FontAwesomeIcon icon={faTrashCan} style={{ color: 'white' }}/>
-                                    </div>
-                                </div>
                                 {
-                                    participants.map((p: NomParticipant) => (
-                                        <div key={p.pk_participant_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', margin: '30px 0' }}>
-                                            <p>{ p.nom ?? "participant n°" + p.pk_participant_id }</p>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px'}}>
-                                                    <TextInput type="number" label="montant personnalisé"  placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[p.pk_participant_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
+                                    participants.length == 0 ? (
+                                    <>
+                                        <p className="centre-centre">Aucun participant selectionné</p>
+                                    </>
+                                    ) : (
+                                        <>
+                                        {
+                                            participants.map((p: NomParticipant) => (
+                                                <div key={p.pk_participant_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', margin: '30px 0' }}>
+                                                    <p>{ p.nom ?? "participant n°" + p.pk_participant_id }</p>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                                            <TextInput type="number" label="montant personnalisé"  placeholder={montant_partage_null} onChange={(e: any) => { const struct = {...montants_partages}; struct[p.pk_participant_id+""] = Number(e.target.value); set_montants_partages({ ...struct })}} />€
+                                                        </div>
+                                                        <FontAwesomeIcon icon={faTrashCan} style={{ color: 'red' }} onClick={() => supprimer_participant_depuis_selecteur(p.pk_participant_id)} className="hover" />
+                                                    </div>
                                                 </div>
-                                                <FontAwesomeIcon icon={faTrashCan} style={{ color: 'red' }} onClick={() => supprimer_participant_depuis_selecteur(p.pk_participant_id)} className="hover" />
-                                            </div>
-                                        </div>
-                                    ))
+                                            ))
+                                        }
+                                        </>
+                                    )
                                 }
                             </div>
                         </div>

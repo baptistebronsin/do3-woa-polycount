@@ -13,6 +13,7 @@ import requete_api from "../../utils/requete_api.util";
 import { AuthContextType, useAuth } from "../../providers/authentification.provider";
 import { NavigateFunction, useNavigate } from "react-router-dom";
 import LoaderSpinner from "../loader/loader_spinner.component";
+import TextInput from "../input/text_input.component";
 
 function DetailDepense({ depense, nom_participants, affiliations, tags, attribution_tags, suppression }: { depense: Depense, nom_participants: NomParticipant[], affiliations: AffiliationDepense[], tags: Tag[], attribution_tags: { fk_depense_id: number; fk_tag_id: number }[], suppression: Function }) {
     const authentification: AuthContextType | null = useAuth();
@@ -77,7 +78,9 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
             <div>
             {
                 est_modification ?
-                <div></div> :
+                <div>
+                    
+                </div> :
                 <div>
                     <p style={{ color: 'grey' }}>Montant : <span style={{ color: 'black' }}>{ depense.montant.toFixed(2) } €</span></p>
                     <p style={{ color: 'grey' }}>Payé par : <span style={{ color: 'black' }}>{ participant_createur ? participant_createur.nom : "Participant inconnu" }</span></p>

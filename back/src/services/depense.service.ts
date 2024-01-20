@@ -21,13 +21,29 @@ export const recuperer_depense_par_id = async (depense_id: number): Promise<Depe
     return result;
 }
 
-export const creer_depense = async (groupe_id: number, participant_createur: number, titre: string, montant: number): Promise<Depense> => {
+export const creer_depense = async (groupe_id: number, participant_createur: number, titre: string, montant: number, url_image: string | null): Promise<Depense> => {
     const result: Depense = await prisma.depense.create({
         data: {
             fk_groupe_id: groupe_id,
             fk_participant_createur_id: participant_createur,
             titre: titre,
-            montant: montant
+            montant: montant,
+            lien_image: url_image
+        }
+    });
+
+    return result;
+}
+
+export const modifier_depense = async (depense_id: number, titre: string, montant: number, url_image: string | null): Promise<Depense> => {
+    const result: Depense = await prisma.depense.update({
+        where: {
+            pk_depense_id: depense_id
+        },
+        data: {
+            titre: titre,
+            montant: montant,
+            lien_image: url_image
         }
     });
 
