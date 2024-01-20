@@ -108,7 +108,7 @@ function AjouterParticipant ({ groupe, participant_actuel, annulation, authentif
                             <Ajout_Email groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } ajouter_utilisateur={ ajouter_utilisateur } />:
                             type_ajout === 2 ?
                             <Ajout_Lien groupe={ groupe } authentification={ authentification } navigate={ navigate } />:
-                            <Ajout_Fictif />
+                            <Ajout_Fictif groupe={ groupe } authentification={ authentification } navigate={ navigate } ajouter_participant={ ajouter_participant } />
                         }
                     </div>:
                     <>
@@ -251,11 +251,63 @@ function Ajout_Lien ({ groupe, authentification, navigate }: { groupe: Groupe, a
     );
 }
 
-function Ajout_Fictif () {
+function Ajout_Fictif ({ groupe, authentification, navigate, ajouter_participant }: { groupe: Groupe, authentification: AuthContextType | null, navigate: NavigateFunction, ajouter_participant: Function }) {
+    const [nom_participant, set_nom_participant] = useState<string>("");
+    const [chargement, set_chargement] = useState<boolean>(false);
+    const [message_erreur, set_message_erreur] = useState<string>("");
+
+    useEffect(() => {
+        set_message_erreur("");
+    }, [nom_participant]);
+
+    const creer_participant_fictif = async (e: SyntheticEvent) => {
+        e.preventDefault();
+
+        if (nom_participant == "") {
+            set_message_erreur("Veuillez saisir un nom.");
+            return;
+        }
+
+        const api_body = {
+            groupe_id: groupe.pk_groupe_id,
+            nom_participant: nom_participant
+        }
+
+        set_chargement(true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/groupe/participant/creer", api_body, authentification, navigate, true);
+        set_chargement(false);
+
+        if (reponse && 'data' in reponse && 'data' in reponse.data) {
+            toast.success(reponse.data.message);
+            ajouter_participant(ParticipantGroupe.from_JSON(reponse.data.data));
+        }
+    }
 
     return (
         <div>
             <p className="centre">Créer un participant fictif à votre groupe de dépense.</p>
+            <div style={{ height: '30px' }}></div>
+            <div className="centre">
+                <TextInput label="Nom du participant" value={ nom_participant } longueur_max={30} onChange={(e: any) => set_nom_participant(e.target.value)} style={{ width: '500px' }} />
+            </div>
+            <div style={{ height: '30px' }}></div>
+            <div className="centre">
+                {
+                    chargement ?
+                    <button className="full-button centre-centre" onClick={() => {}}>
+                        <LoaderSpinner />
+                        <p className="inline-block">&nbsp;Création en cours</p>
+                    </button> :
+                    <button className="full-button" onClick={ creer_participant_fictif }>Créer le participant</button>
+                }
+            </div>
+            {
+                message_erreur ?
+                <>
+                    <div style={{ height: '30px' }}></div>
+                    <p style={{ color: 'red', textAlign: 'center' }}>{ message_erreur }</p>
+                </> : <></>
+            }
         </div>
     );
 }

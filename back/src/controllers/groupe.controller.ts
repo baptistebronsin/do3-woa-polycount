@@ -288,6 +288,88 @@ export const recuperer_participants: RequestHandler = async (req: Request, res: 
     }
 }
 
+export const creer_participant_fictif: RequestHandler = async (req: Request, res: Response) => {
+    // On récupère cette information depuis le middleware JWT
+    const utilisateur_id: number = (<any>req).user;
+
+    const { groupe_id, nom_participant } = req.body;
+
+    if (!["number"].includes(typeof groupe_id) || !["string"].includes(typeof nom_participant))
+        return res.status(http_response_util.statuts.erreur_client.parametres_manquant).json({
+            message: "Un ou plusieurs paramètres ne sont pas présent dans l'URL.",
+            parametres: [
+                { nom: "groupe_id", type: "number", facultatif: false },
+                { nom: "nom_participant", type: "string", facultatif: false }
+            ]
+        });
+
+    if (isNaN(Number(groupe_id)))
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le groupe_id doit être un nombre."
+        });
+
+    if (nom_participant.length > 30)
+        return res.status(http_response_util.statuts.erreur_client.contenu_pas_autorise).json({
+            message: "Le nom du participant ne doit pas faire plus de 30 caractères."
+        });
+
+    const groupe_id_number: number = Number(groupe_id);
+
+    let utilisateur_existant: Utilisateur | null = null;
+
+    // On cherche l'utilisateur par son id avec son token JWT
+    try {
+        utilisateur_existant = await utilisateur_service.recuperer_utilisateur_par_id(utilisateur_id);
+
+        if (!utilisateur_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Malgré votre token jwt, nous ne vous avons pas trouvé dans la base de données."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors de la récupération des données de l'utilisateur.",
+            erreur: error
+        });
+    }
+
+    let groupe_existant: Groupe | null = null;
+
+    try {
+        groupe_existant = await groupe_service.recuperer_groupe(groupe_id_number);
+
+        if (!groupe_existant)
+            return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+                message: "Le groupe partagé n'existe pas."
+            });
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+            message: "Une erreur serveur est survenue lors récupération des informations du groupe.",
+            erreur: error
+        });
+    }
+
+    if (groupe_existant.fk_utilisateur_createur_id != utilisateur_id)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Seul l'administrateur du groupe partagé peut envoyer des invitations."
+        });
+
+    let participant_creation: Participant_Groupe | null = null;
+
+    try {
+        participant_creation = await groupe_service.ajouter_participant(groupe_id_number, null, nom_participant, null);
+    } catch (error: PrismaClientKnownRequestError | any) {
+        return res.status(http_response_util.statuts.erreur_serveur.erreur_interne).json({
+                message: "Une erreur serveur est survenue lors de l'ajout du participant au groupe.",
+                erreur: error
+            });
+    }
+
+    return res.status(http_response_util.statuts.succes.ok).json({
+        message: "L'utilisateur fictif a bien été créé.",
+        data: participant_creation
+    });
+}
+
 export const ajouter_participant_email: RequestHandler = async (req: Request, res: Response) => {
     // On récupère cette information depuis le middleware JWT
     const utilisateur_id: number = (<any>req).user;
