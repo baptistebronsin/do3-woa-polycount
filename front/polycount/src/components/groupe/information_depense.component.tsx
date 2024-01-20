@@ -201,13 +201,19 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
                 <div
                   style={{ display: "grid", gridTemplateColumns: "30% auto" }}
                 >
-                  <ListeDepenses
-                    depenses={depenses}
-                    nom_participants={nom_participants}
-                    affiliations={attribution_depenses}
-                    depense_selectionnee={depense_selectionnee}
-                    set_depense_selectionnee={set_depense_selectionnee}
-                  />
+                  {
+                    depenses.length == 0 ? (
+                      <p className="centre-centre">Aucune dépense n'a été enregistrée.</p>
+                    ) : (
+                      <ListeDepenses
+                      depenses={depenses}
+                      nom_participants={nom_participants}
+                      affiliations={attribution_depenses}
+                      depense_selectionnee={depense_selectionnee}
+                      set_depense_selectionnee={set_depense_selectionnee}
+                    />
+                    )
+                  }
                   <div style={{ margin: "0 20px" }}>
                     {
                       depenses.find((d: Depense) => d.pk_depense_id === depense_selectionnee) ?

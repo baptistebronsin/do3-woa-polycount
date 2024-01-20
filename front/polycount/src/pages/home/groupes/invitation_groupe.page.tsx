@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavigateFunction, useLocation, useNavigate } from "react-router-dom";
 import { Groupe } from "../../../models/groupe.model";
-import { Axios, AxiosError, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../../utils/requete_api.util";
 import { AuthContextType, useAuth } from "../../../providers/authentification.provider";
 import LoaderCenter from "../../../components/loader/loader_center.component";
@@ -25,8 +25,13 @@ function InvitationGroupe () {
                     ) : type_verification === 'LIEN' ? (
                         <InvitationGroupeLien search_params={ search_params } />
                     ) : (
-                        <div className="centre-centre">
-                            <p>Une erreur est survenue lors de la récupération de l'invitation.</p>
+                        <div className="grid-2-auto">
+                            <div className="centre">
+                                <img alt="Logo d'un personnage tenant une erreur" src="/images/error.png" style={{ height: '260px' }}/>
+                            </div>
+                            <div className="centre-centre">
+                                <p>Il semble que l'URL a été altérée. Veuillez vérifier le lien d'invitation que vous avez reçu.</p>
+                            </div>
                         </div>
                     )
                 }
@@ -37,7 +42,7 @@ function InvitationGroupe () {
 }
 
 function InvitationGroupeEmail ({ search_params }: { search_params: URLSearchParams }) {
-    const groupe_id: string | null = search_params.get('groupe_id');
+    const participant_id: string | null = search_params.get('participant_id');
     const token: string | null = search_params.get('token');
     const groupe_token: string | null = search_params.get('groupe_token');
 
@@ -49,31 +54,127 @@ function InvitationGroupeEmail ({ search_params }: { search_params: URLSearchPar
     const [chargement_recuperer_groupe, set_chargement_recuperer_groupe] = useState<boolean>(false);
     const [chargement_acceptation_invitation, set_chargement_acceptation_invitation] = useState<boolean>(false);
 
-    // useEffect(() => {
-    //     if (groupe_id && !isNaN(Number(groupe_id)) && token && groupe_token && !isNaN(Number(groupe_token))) {
-    //         recuperer_groupe_api();
-    //     }
-    // }, []);
+    useEffect(() => {
+        if (participant_id != null && !isNaN(Number(participant_id)) && token != null && groupe_token != null && !isNaN(Number(groupe_token))) {
+            recuperer_groupe_api();
+        }
+    }, []);
 
-    // const recuperer_groupe_api = async (): Promise<void> => {
-    //     const api_body = {
-    //         groupe_id: Number(groupe_id),
-    //         token: token,
-    //     }
+    const recuperer_groupe_api = async (): Promise<void> => {
+        const api_body = {
+            participant_id: Number(participant_id), 
+            token: token,
+        }
 
-    //     set_chargement_recuperer_groupe(true);
-    //     const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/groupe/participant/email/verification/detail", api_body, authentification, navigate, true);
-    //     set_chargement_recuperer_groupe(false);
+        set_chargement_recuperer_groupe(true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/groupe/participant/email/verification/detail", api_body, authentification, navigate, true);
+        set_chargement_recuperer_groupe(false);
 
-    //     if (reponse && 'data' in reponse && 'data' in reponse.data) {
-    //         set_groupe(Groupe.from_JSON(reponse.data.data));
-    //     }
-    // }
+        if (reponse && 'data' in reponse && 'data' in reponse.data) {
+            set_groupe(Groupe.from_JSON(reponse.data.data));
+        }
+    }
+
+    const accepter_invitation_api = async (): Promise<void> => {
+        const api_body = {
+            participant_id: Number(participant_id),
+            token: token,
+            groupe_token: Number(groupe_token)
+        }
+
+        set_chargement_acceptation_invitation(true);
+
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/groupe/participant/email/verification", api_body, authentification, navigate, true);
+
+        set_chargement_acceptation_invitation(false);
+
+        if (reponse && 'data' in reponse) {
+            set_accepter_invitation(true);
+        }
+    }
 
     return (
-        <div className="grid-20-auto-20">
-            <p>Invitation au groupe de dépense depuis un mail</p>
-        </div>
+        <>
+            {
+                participant_id != null && !isNaN(Number(participant_id)) && token != null && groupe_token != null && !isNaN(Number(groupe_token)) ? (
+                    <div className="grid-20-auto-20">
+                        <p>Invitation au groupe de dépense depuis un mail</p>
+                        {
+                            chargement_recuperer_groupe ?
+                            <LoaderCenter message="Récupération des informations de l'invitation" /> :
+                            (
+                                <>
+                                {
+                                    groupe === null ? (
+                                        <div className="centre-centre">
+                                            <div className="grid-2-auto">
+                                                <div className="centre">
+                                                    <img alt="Logo d'un groupe perdu" src="/images/void.png" style={{ height: '260px' }}/>
+                                                </div>
+                                                <div className="centre-centre">
+                                                    <p>L'invitation à ce groupe n'est plus disponible.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {
+                                                accepter_invitation ? (
+                                                    <div className="grid-2-auto">
+                                                        <div className="centre">
+                                                            <img alt="Logo d'un groupe de personnages content" src="/images/happy.png" style={{ height: '260px' }}/>
+                                                        </div>
+                                                        <div className="centre-centre">
+                                                            <p>Vous avez bien été ajouté au groupe de dépense <strong>{ groupe.nom }</strong>.</p>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="grid-2-auto">
+                                                            <div className="centre">
+                                                                <img alt="Logo d'un groupe de personnages" src="/images/groupe.png" style={{ height: '260px' }}/>
+                                                            </div>
+                                                            <div className="centre-centre">
+                                                                <p>Vous avez été invité à rejoindre le groupe de dépense <strong>{ groupe.nom }</strong>.</p>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ height: '20px' }}></div>
+                                                        <div className="centre">
+                                                        {
+                                                            chargement_acceptation_invitation ?
+                                                            <button className="full-button centre-centre" onClick={() => {}}>
+                                                                <LoaderSpinner />
+                                                                <p className="inline-block">&nbsp;Connection en cours</p>
+                                                            </button> :
+                                                            <button className="full-button" onClick={ accepter_invitation_api }>Rejoindre</button>
+                                                        }
+                                                        </div>
+                                                    </>
+                                                )
+                                            }
+                                        </>
+                                    )
+                                }
+                                </>
+                            )
+                        }
+                        <div>
+                            <p className="inline-block">Vous souhaitez retourner à la page d'accueil ?&nbsp;</p>
+                            <Link className="inline-block lien" to='/connexion'>page d'accueil</Link>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="grid-2-auto">
+                        <div className="centre">
+                            <img alt="Logo d'un personnage tenant une erreur" src="/images/error.png" style={{ height: '260px' }}/>
+                        </div>
+                        <div className="centre-centre">
+                            <p>Il semble que l'URL a été altérée. Veuillez vérifier le lien d'invitation que vous avez reçu.</p>
+                        </div>
+                    </div>
+                )
+            }
+        </>
     );
 }
 
@@ -106,7 +207,7 @@ function InvitationGroupeLien ({ search_params }: { search_params: URLSearchPara
         }
 
         set_chargement_recuperer_groupe(true);
-        const reponse: AxiosResponse | AxiosError | null = await requete_api('POST', "/groupe/participant/lien/verification/detail", api_body, authentification, navigate, true);
+        const reponse: AxiosResponse | AxiosError | null = await requete_api('PUT', "/groupe/participant/lien/verification/detail", api_body, authentification, navigate, true);
         set_chargement_recuperer_groupe(false);
 
         if (reponse && 'data' in reponse && 'data' in reponse.data) {
