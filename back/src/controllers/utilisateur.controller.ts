@@ -805,9 +805,11 @@ export const modification_informations: RequestHandler = async (req: Request, re
         });
     }
 
+    let utilisateur_modifie: Utilisateur | null = null;
+
     // On modifie les informations de l'utilisateur dans la bdd
     try {
-        await utilisateur_service.modifier_utilisateur({
+        utilisateur_modifie = await utilisateur_service.modifier_utilisateur({
             ...utilisateur_existant,
             nom: nom_formate,
             prenom: prenom_formate,
@@ -823,9 +825,10 @@ export const modification_informations: RequestHandler = async (req: Request, re
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Les données ont bien été mises à jour.",
         data: {
-            nom: nom_formate,
-            prenom: prenom_formate,
-            genre: genre_formate
+            ...utilisateur_modifie,
+            cree_le: moment(utilisateur_modifie.cree_le).format(moment_date_time_format),
+            valide_le: utilisateur_modifie.valide_le ? moment(utilisateur_modifie.valide_le).format(moment_date_time_format) : null,
+            desactive_le: utilisateur_modifie.desactive_le ? moment(utilisateur_modifie.desactive_le).format(moment_date_time_format) : null,
         }
     });
 }
@@ -1045,9 +1048,11 @@ export const desactivation: RequestHandler = async (req: Request, res: Response)
 
     const maintenant: Date = new Date();
 
+    let utilisateur_modifie: Utilisateur | null = null;
+
     // On modifie les données de l'utilisateur dans la bdd
     try {
-        await utilisateur_service.modifier_utilisateur({
+        utilisateur_modifie = await utilisateur_service.modifier_utilisateur({
             ...utilisateur_existant,
             desactive_le: maintenant
         });
@@ -1071,17 +1076,14 @@ export const desactivation: RequestHandler = async (req: Request, res: Response)
             message: "Une erreur serveur est survenue de l'envoi du mail de désactivation."
         });
 
-    const utilisateur_minimalise: IUtilisateur = {
-        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
-        nom: utilisateur_existant.nom,
-        prenom: utilisateur_existant.prenom,
-        genre: utilisateur_existant.genre,
-        email: utilisateur_existant.email
-    };
-
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre comtpe a bien été désactivé.",
-        data: utilisateur_minimalise
+        data: {
+            ...utilisateur_modifie,
+            cree_le: moment(utilisateur_modifie.cree_le).format(moment_date_time_format),
+            valide_le: utilisateur_modifie.valide_le ? moment(utilisateur_modifie.valide_le).format(moment_date_time_format) : null,
+            desactive_le: utilisateur_modifie.desactive_le ? moment(utilisateur_modifie.desactive_le).format(moment_date_time_format) : null,
+        }
     });
 }
 
@@ -1111,9 +1113,11 @@ export const reactivation: RequestHandler = async (req: Request, res: Response) 
             message: "Votre compte est déjà activé."
         });
 
+    let utilisateur_modifie: Utilisateur | null = null;
+
     // On modifie les données de l'utilisateur dans la bdd
     try {
-        await utilisateur_service.modifier_utilisateur({
+        utilisateur_modifie = await utilisateur_service.modifier_utilisateur({
             ...utilisateur_existant,
             desactive_le: null
         });
@@ -1134,16 +1138,13 @@ export const reactivation: RequestHandler = async (req: Request, res: Response) 
             message: "Une erreur serveur est survenue de l'envoi du mail de réactivation."
         });
 
-    const utilisateur_minimalise: IUtilisateur = {
-        pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
-        nom: utilisateur_existant.nom,
-        prenom: utilisateur_existant.prenom,
-        genre: utilisateur_existant.genre,
-        email: utilisateur_existant.email
-    };
-
     return res.status(http_response_util.statuts.succes.ok).json({
         message: "Votre comtpe a bien été réactivé.",
-        data: utilisateur_minimalise
+        data: {
+            ...utilisateur_modifie,
+            cree_le: moment(utilisateur_modifie.cree_le).format(moment_date_time_format),
+            valide_le: utilisateur_modifie.valide_le ? moment(utilisateur_modifie.valide_le).format(moment_date_time_format) : null,
+            desactive_le: utilisateur_modifie.desactive_le ? moment(utilisateur_modifie.desactive_le).format(moment_date_time_format) : null,
+        }
     });
 }

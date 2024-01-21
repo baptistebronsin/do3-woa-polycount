@@ -5,7 +5,7 @@ export class Utilisateur {
     genre: string | null;
     email: string;
 
-    public constructor (pk_utilisateur_id: number, nom: string, prenom: string, genre: string, email: string) {
+    public constructor (pk_utilisateur_id: number, nom: string, prenom: string, genre: string | null, email: string) {
         this.pk_utilisateur_id = pk_utilisateur_id;
         this.nom = nom;
         this.prenom = prenom;

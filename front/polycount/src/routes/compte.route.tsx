@@ -1,11 +1,13 @@
 import { Route, Routes } from 'react-router-dom';
-import Compte from '../pages/home/compte/compte.page';
+import Informations from '../pages/home/compte/informations.page';
 
 function CompteRoute() {
 
     return (
         <Routes>
-            <Route path='/' element={ <Compte /> } />
+            <Route path='/informations' element={ <Informations /> } />
+            <Route path='/email' element={ <Informations /> } />
+            <Route path='/mot-de-passe' element={ <Informations /> } />
         </Routes>
     );
 }
