@@ -175,6 +175,11 @@ export const creation_groupe: RequestHandler = async (req: Request, res: Respons
         });
     }
 
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas créer un groupe partagé car votre compte est en cours de désactivation."
+        });
+
     let creation_groupe: Groupe | null = null;
 
     try {
@@ -266,6 +271,11 @@ export const modifier_groupe: RequestHandler = async (req: Request, res: Respons
         });
     }
 
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas modifier un groupe partagé car votre compte est en cours de désactivation."
+        });
+
     let groupe_existant: Groupe | null = null;
 
     try {
@@ -351,6 +361,11 @@ export const cloturer_groupe: RequestHandler = async (req: Request, res: Respons
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas clôturer un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let groupe_existant: Groupe | null = null;
 
@@ -620,6 +635,11 @@ export const creer_participant_fictif: RequestHandler = async (req: Request, res
         });
     }
 
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas ajouteur un participant fictif à un groupe partagé car votre compte est en cours de désactivation."
+        });
+
     let groupe_existant: Groupe | null = null;
 
     try {
@@ -710,6 +730,11 @@ export const modifier_participant: RequestHandler = async (req: Request, res: Re
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas modifier un participant fictif à un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let participant_existant: Participant_Groupe | null = null;
 
@@ -816,6 +841,11 @@ export const quitter_participant: RequestHandler = async (req: Request, res: Res
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas supprimer un participant fictif à un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let participant_existant: Participant_Groupe | null = null;
 
@@ -930,6 +960,11 @@ export const associer_compte_participant_fictif: RequestHandler = async (req: Re
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas associer un utilisateur réel à un participant fictif à un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let participant_existant: Participant_Groupe | null = null;
 
@@ -1122,6 +1157,11 @@ export const ajouter_participant_email: RequestHandler = async (req: Request, re
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas ajouter un utilisateur à un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let groupe_existant: Groupe | null = null;
 
@@ -1485,6 +1525,11 @@ export const ajouter_participant_lien: RequestHandler = async (req: Request, res
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas créer de lien d'invitation à un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let groupe_existant: Groupe | null = null;
 

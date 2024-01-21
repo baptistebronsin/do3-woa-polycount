@@ -31,6 +31,7 @@ function InformationsGroupe() {
   const [participant_actuel, set_participant_actuel] = useState<ParticipantGroupe | null>(null);
 
   const [chargement_groupe, set_chargement_groupe] = useState<boolean>(true);
+  const [chargement_depenses, set_chargement_depenses] = useState<boolean>(true);
   
   const [section_selectionnee, set_section_selectionnee] = useState<number>(0);
 
@@ -64,6 +65,8 @@ function InformationsGroupe() {
 
     set_groupe(groupe_api);
 
+    set_chargement_depenses(true);
+
     const participant_groupe_api: ParticipantGroupe[] = await recuperer_participants_api();
     const utilisateurs_api: Utilisateur[] = await recuperer_utilisateurs_api();
     const nom_participants_fun: NomParticipant[] = calculer_nom_participant();
@@ -71,6 +74,8 @@ function InformationsGroupe() {
     set_participants_groupe(participant_groupe_api);
     set_utilisateurs(utilisateurs_api);
     set_nom_participants(nom_participants_fun);
+
+    set_chargement_depenses(false);
   }
 
   const recuperer_groupe_api = async (): Promise<Groupe | null> => {
@@ -148,7 +153,8 @@ function InformationsGroupe() {
 
   return (
     <>
-      {chargement_groupe ? (
+      {
+      chargement_groupe || chargement_depenses ? (
         <LoaderCenter message="Récupération des informations" />
       ) : (
         <>

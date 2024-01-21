@@ -6,7 +6,7 @@ import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../utils/requete_api.util";
 import { AuthContextType, useAuth } from "../../providers/authentification.provider";
 import { toast } from "sonner";
-import { Utilisateur } from "../../models/utilisateur.model";
+import { UtilisateurComplet } from "../../models/utilisateur_complet.model";
 
 function Verification () {
     const authentification: AuthContextType | null = useAuth();
@@ -58,7 +58,7 @@ function Verification () {
                 return null;
             }
 
-            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe });
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: UtilisateurComplet.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe });
 
             if (reponse.data.token) {
                 localStorage.setItem('token', reponse.data.token);

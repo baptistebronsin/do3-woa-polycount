@@ -191,7 +191,7 @@ function InformationDepense ({ groupe, participant_actuel, nom_participants }: {
                 <div style={{ height: '47px' }}></div> :
                 <button
                 className="full-button"
-                onClick={ participant_actuel !== null && participant_actuel.peut_creer_depense ? () => set_ajoute_depense(true) : () => toast.warning("Vous n'avez pas les permissions pour créer une dépense")}
+                onClick={ authentification?.authentification.utilisateur?.desactive_le !== null ? () => toast.warning("Votre compte est en procédure de désactivation, vous ne pouvez plus créer de dépense.") : (participant_actuel !== null && participant_actuel.peut_creer_depense ? () => set_ajoute_depense(true) : () => toast.warning("Vous n'avez pas les permissions pour créer une dépense")) }
                 >
                 Ajouter une dépense
                 </button>

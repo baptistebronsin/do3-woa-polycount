@@ -156,6 +156,11 @@ export const creer_depense: RequestHandler = async (req: Request, res: Response)
         });
     }
 
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas ajouter une dépense à un groupe partagé car votre compte est en cours de désactivation."
+        });
+
     let groupe_existant: Groupe | null = null;
 
     try {
@@ -604,6 +609,11 @@ export const supprimer_depense: RequestHandler = async (req: Request, res: Respo
         });
     }
 
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas supprimer une dépense à un groupe partagé car votre compte est en cours de désactivation."
+        });
+
     let depense_existant: Depense | null = null;
 
     try {
@@ -727,6 +737,11 @@ export const modifier_depense: RequestHandler = async (req: Request, res: Respon
             erreur: error
         });
     }
+
+    if (utilisateur_existant.desactive_le != null)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Vous ne pouvez pas modifier une dépense à un groupe partagé car votre compte est en cours de désactivation."
+        });
 
     let depense_existante: Depense | null = null;
 

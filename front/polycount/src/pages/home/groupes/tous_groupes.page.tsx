@@ -7,10 +7,10 @@ import CreationGroupe from "../../../components/groupe/creation_groupe.component
 import { AxiosError, AxiosResponse } from "axios";
 import requete_api from "../../../utils/requete_api.util";
 import CarteGroupe from "../../../components/groupe/carte_groupe.component";
+import { toast } from "sonner";
 
 function TousGroupes() {
     const authentification: AuthContextType | null = useAuth();
-
     const navigate: NavigateFunction = useNavigate();
 
     const [groupes, set_groupes] = useState<Groupe[]>([]);
@@ -42,7 +42,8 @@ function TousGroupes() {
     }
 
     return (
-        <section style={{ margin: "10px" }}>
+        <section style={{ margin: "10px 20px" }}>
+
             {
                 creation_groupe ?
                 <CreationGroupe annulation={set_creation_groupe} ajouter_groupe={ajouter_groupe} /> : <></>
@@ -53,7 +54,7 @@ function TousGroupes() {
                     <h1 style={{ display: 'inline-block' }}>Vous avez {groupes.length} {groupes.length > 1 ? "groupes partagés" : "groupe partagé"}</h1> :
                     <p></p>
                 }
-                <button className="full-button" onClick={() => set_creation_groupe(true)}>Créer un groupe</button>
+                <button className="full-button" onClick={ authentification?.authentification.utilisateur?.desactive_le !== null ? () => toast.warning("Votre compte est en procédure de désactivation, vous ne pouvez plus créer de groupe.") : () => set_creation_groupe(true)}>Créer un groupe</button>
             </div>
             <div style={{ height: '20px' }}></div>
             {

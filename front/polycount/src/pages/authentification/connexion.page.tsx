@@ -6,7 +6,7 @@ import requete_api from "../../utils/requete_api.util";
 import LoaderSpinner from "../../components/loader/loader_spinner.component";
 import { toast } from "sonner";
 import { AuthContextType, useAuth } from "../../providers/authentification.provider";
-import { Utilisateur } from "../../models/utilisateur.model";
+import { UtilisateurComplet } from "../../models/utilisateur_complet.model";
 
 function Connexion() {
     const [email, set_email] = useState<string>("");
@@ -67,7 +67,8 @@ function Connexion() {
                 return null;
             }
 
-            authentification.set_authentification({ token: reponse.data.token, utilisateur: Utilisateur.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe });
+            authentification.set_authentification({ token: null, utilisateur: null, mot_de_passe: null });
+            authentification.set_authentification({ token: reponse.data.token, utilisateur: UtilisateurComplet.from_JSON(reponse.data.data), mot_de_passe: mot_de_passe });
 
             if (reponse.data.token) {
                 localStorage.setItem('token', reponse.data.token);

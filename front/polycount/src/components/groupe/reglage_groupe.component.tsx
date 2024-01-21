@@ -132,7 +132,7 @@ function ReglageGroupe ({ groupe, participant_actuel, utilisateurs, modifier_gro
                                                 <LoaderSpinner />
                                                 <p className="inline-block">&nbsp;Modification en cours</p>
                                             </button> :
-                                            <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ modifier_groupe_api }>
+                                            <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ authentification?.authentification.utilisateur?.desactive_le !== null ? () => toast.warning("Votre compte est en procédure de désactivation, vous ne pouvez plus modifier de groupe.") : modifier_groupe_api }>
                                                 <FontAwesomeIcon icon={faFloppyDisk} />
                                                 Enregistrer
                                             </button>
@@ -186,6 +186,7 @@ function ReglageGroupe ({ groupe, participant_actuel, utilisateurs, modifier_gro
                                 ) : (<></>)
                             }
                         </div>
+                        <p style={{ color: 'red' }}>{ message_erreur }</p>
                         <div style={{ border: '2px solid red', borderRadius: '10px', padding: '10px', width: '60%', marginTop: '30px' }}>
                             <h1 style={{ color: 'red' }}>Zone rouge</h1>
                             <p>Toute action dans cette zone est irréversible.</p>
@@ -200,7 +201,7 @@ function ReglageGroupe ({ groupe, participant_actuel, utilisateurs, modifier_gro
                                         est_administrateur ? (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
                                                 <p>Clôturer le groupe :</p>
-                                                <button className="delete-button" onClick={ () => set_afficher_message_cloture(true) }>Clôturer</button>
+                                                <button className="delete-button" onClick={ authentification?.authentification.utilisateur?.desactive_le !== null ? () => toast.warning("Votre compte est en procédure de désactivation, vous ne pouvez plus clôturer de groupe.") : () => set_afficher_message_cloture(true) }>Clôturer</button>
                                             </div>
                                         ) : (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>

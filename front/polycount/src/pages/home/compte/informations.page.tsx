@@ -81,8 +81,10 @@ function Informations() {
 
             set_utilisateur(utilisateur_reponse);
 
-            if (authentification)
-                authentification.set_authentification({ token: authentification.authentification.token, utilisateur: { pk_utilisateur_id: utilisateur_reponse.pk_utilisateur_id, nom: utilisateur_reponse.nom, prenom: utilisateur_reponse.prenom, genre: utilisateur_reponse.genre, email: utilisateur_reponse.email }, mot_de_passe: authentification.authentification.mot_de_passe });
+            if (authentification) {
+                localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+                authentification.set_authentification({ token: authentification.authentification.token, utilisateur: utilisateur_reponse, mot_de_passe: authentification.authentification.mot_de_passe });
+            }
         }
     }
 
@@ -101,6 +103,11 @@ function Informations() {
 
             set_utilisateur(UtilisateurComplet.from_JSON(reponse.data.data));
             set_afficher_message_desactivation(false);
+
+            if (authentification) {
+                localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+                authentification.set_authentification({ token: authentification.authentification.token, utilisateur: UtilisateurComplet.from_JSON(reponse.data.data), mot_de_passe: authentification.authentification.mot_de_passe });
+            }
         }
     }
 
@@ -118,6 +125,11 @@ function Informations() {
                 toast.success("Votre compte a bien été réactivé.");
 
             set_utilisateur(UtilisateurComplet.from_JSON(reponse.data.data));
+            
+            if (authentification) {
+                localStorage.setItem('utilisateur', JSON.stringify(reponse.data.data));
+                authentification.set_authentification({ token: authentification.authentification.token, utilisateur: UtilisateurComplet.from_JSON(reponse.data.data), mot_de_passe: authentification.authentification.mot_de_passe });
+            }
         }
     }
 

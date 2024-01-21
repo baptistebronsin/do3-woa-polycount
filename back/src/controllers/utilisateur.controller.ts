@@ -200,25 +200,27 @@ export const connexion: RequestHandler = async (req: Request, res: Response) => 
             });
         }
 
-        const utilisateur_minimalise: IUtilisateur = {
-            pk_utilisateur_id: utilisateur_existant.pk_utilisateur_id,
-            nom: utilisateur_existant.nom,
-            prenom: utilisateur_existant.prenom,
-            genre: utilisateur_existant.genre,
-            email: utilisateur_existant.email
-        };
-
         // Si le compte a été vérifie, alors on génère un token de connexion
         if (utilisateur_existant.valide_le)
             return res.status(http_response_util.statuts.succes.ok).json({
                 message: "Connexion réussie.",
-                data: utilisateur_minimalise,
+                data: {
+                    ...utilisateur_existant,
+                    cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
+                    valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
+                    desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null,
+                },
                 token: genere_token(utilisateur_existant.pk_utilisateur_id)
             });
         else
             return res.status(http_response_util.statuts.succes.ok).json({
                 message: "Connexion réussie. Veuillez faire vérifier votre compte.",
-                data: utilisateur_minimalise,
+                data: {
+                    ...utilisateur_existant,
+                    cree_le: moment(utilisateur_existant.cree_le).format(moment_date_time_format),
+                    valide_le: utilisateur_existant.valide_le ? moment(utilisateur_existant.valide_le).format(moment_date_time_format) : null,
+                    desactive_le: utilisateur_existant.desactive_le ? moment(utilisateur_existant.desactive_le).format(moment_date_time_format) : null,
+                },
                 token: null
             });
 

@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Utilisateur } from '../models/utilisateur.model';
+import { UtilisateurComplet } from '../models/utilisateur_complet.model';
 
 export interface AuthContextType {
     authentification: {
       token: string | null;
-      utilisateur: Utilisateur | null;
+      utilisateur: UtilisateurComplet | null;
       mot_de_passe: string | null;
     };
     set_authentification: React.Dispatch<React.SetStateAction<{
       token: string | null;
-      utilisateur: Utilisateur | null;
+      utilisateur: UtilisateurComplet | null;
       mot_de_passe: string | null;
     }>>;
 };
@@ -17,7 +17,7 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: any) => {
-  const [authentification, set_authentification] = useState<{token: string | null, utilisateur: Utilisateur | null, mot_de_passe: string | null}>({ token: null, utilisateur: null, mot_de_passe: null });
+  const [authentification, set_authentification] = useState<{token: string | null, utilisateur: UtilisateurComplet | null, mot_de_passe: string | null}>({ token: null, utilisateur: null, mot_de_passe: null });
   const [chargement, set_chargement] = useState(true);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: any) => {
     const mot_de_passe: string | null = localStorage.getItem('mot_de_passe');
 
     if (token && user && mot_de_passe) {
-        set_authentification({ token: token, utilisateur: Utilisateur.from_JSON(JSON.parse(user)), mot_de_passe: mot_de_passe });
+        set_authentification({ token: token, utilisateur: UtilisateurComplet.from_JSON(JSON.parse(user)), mot_de_passe: mot_de_passe });
     }
 
     set_chargement(false);

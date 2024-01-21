@@ -133,24 +133,23 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                     est_modification ?
                     <div style={{ display: 'flex', gap: '20px' }}>
                         <button className="lien" onClick={switch_modification}>Annuler</button>
-                        <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ modifier_depense_api }>
-                            <FontAwesomeIcon icon={faFloppyDisk} />
-                            Enregistrer
-                        </button>
+                        {
+                            chargement_modification ?
+                            <button className="full-button centre-centre" onClick={() => {}}>
+                                <LoaderSpinner />
+                                <p className="inline-block">&nbsp;Enregistrement en cours</p>
+                            </button> :
+                            <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ modifier_depense_api }>
+                                <FontAwesomeIcon icon={faFloppyDisk} />
+                                Enregistrer
+                            </button>
+                        }
+                        
                     </div> :
-                    <>
-                    {
-                        chargement_modification ?
-                        <button className="delete-button centre-centre" onClick={() => {}}>
-                            <LoaderSpinner />
-                            <p className="inline-block">&nbsp;Modification en cours</p>
-                        </button> :
-                        <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ participant_actuel != null && participant_actuel.peut_modifier_depense ? switch_modification : () => toast.warning("Vous n'avez pas les permissions pour modifier une dépense") }>
-                            <FontAwesomeIcon icon={faPencil} />
-                            Modifier
-                        </button>
-                    }
-                    </>
+                    <button className="full-button" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={ authentification?.authentification.utilisateur?.desactive_le !== null ? () => toast.warning("Votre compte est en procédure de désactivation, vous ne pouvez plus modifier de dépense.") : (participant_actuel != null && participant_actuel.peut_modifier_depense ? switch_modification : () => toast.warning("Vous n'avez pas les permissions pour modifier une dépense")) }>
+                        <FontAwesomeIcon icon={faPencil} />
+                        Modifier
+                    </button>
                 }
             </div>
             <div>
@@ -239,7 +238,7 @@ function DetailDepense({ depense, nom_participants, affiliations, tags, attribut
                                 <LoaderSpinner />
                                 <p className="inline-block">&nbsp;Suppression en cours</p>
                             </button> :
-                            <button className="delete-button" onClick={ participant_actuel != null && participant_actuel.peut_supprimer_depense ? supprimer_depense_api : () => toast.warning("Vous n'avez pas les permissions pour supprimer une dépense") }>Supprimer la dépense</button>
+                            <button className="delete-button" onClick={ authentification?.authentification.utilisateur?.desactive_le !== null ? () => toast.warning("Votre compte est en procédure de désactivation, vous ne pouvez plus supprimer de dépense.") : (participant_actuel != null && participant_actuel.peut_supprimer_depense ? supprimer_depense_api : () => toast.warning("Vous n'avez pas les permissions pour supprimer une dépense")) }>Supprimer la dépense</button>
                         }
                     </div>
                 )
