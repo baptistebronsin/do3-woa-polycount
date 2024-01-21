@@ -4,7 +4,7 @@
   "description": "a student project",
   "main": "dist/index.js",
   "scripts": {
-    "start": "tsc && node dist/app.js",
+    "start": "tsc && node dist/index.js",
     "dev": "nodemon --exec ts-node ./src/index.ts",
     "build": "tsc -p .",
     "migrate:prod": "prisma migrate deploy"
