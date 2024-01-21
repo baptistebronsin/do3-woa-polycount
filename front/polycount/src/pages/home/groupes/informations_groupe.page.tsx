@@ -30,8 +30,8 @@ function InformationsGroupe() {
   const [nom_participants, set_nom_participants] = useState<NomParticipant[]>([]);
   const [participant_actuel, set_participant_actuel] = useState<ParticipantGroupe | null>(null);
 
-  const [chargement_groupe, set_chargement_groupe] = useState<boolean>(true);
-  const [chargement_depenses, set_chargement_depenses] = useState<boolean>(true);
+  const [chargement_groupe, set_chargement_groupe] = useState<boolean>(false);
+  const [chargement_depenses, set_chargement_depenses] = useState<boolean>(false);
   
   const [section_selectionnee, set_section_selectionnee] = useState<number>(0);
 

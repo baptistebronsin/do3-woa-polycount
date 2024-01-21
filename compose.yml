@@ -24,7 +24,7 @@ services:
       - compose.env
 
   front:
-    image: baraly/polycount-front:0.1.5
+    image: baraly/polycount-front:0.1.6
     restart: always
     depends_on:
       - back
