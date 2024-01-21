@@ -855,6 +855,11 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
             message: "Veuillez saisir une adresse email valide."
         });
 
+    if (email_formate.length > 250)
+        return res.status(http_response_util.statuts.erreur_client.mauvaise_requete).json({
+            message: "Veuillez utiliser une adresse email avec moins de 250 caractères."
+        });
+
     const email_domaine: string[] = email_formate.split('@')[1].split('.');
 
     // Si l'envoie de mail posera problème avec le domaine
@@ -900,8 +905,6 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
         });
     }
 
-    
-
     // On modifie les informations de l'utilisateur dans la bdd
     try {
         await utilisateur_service.modifier_utilisateur({
@@ -930,7 +933,7 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
 
     // On l'informe du changement par mail
     const mail = mail_utils.contenu.mail_notification_changement;
-    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/verification_compte?email=" + utilisateur_existant.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/verification_compte?email=" + email_formate + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
     const etat_mail: boolean = await envoyer_mail(email_formate, mail.entete, contenu_mail);
 
     if (!etat_mail)

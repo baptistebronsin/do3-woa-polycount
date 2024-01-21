@@ -47,4 +47,4 @@ export const contenu: {
     }
 };
 
-export const domaines_black_liste: string[] = ["umontpellier"];
+export const domaines_black_liste: string[] = [];
