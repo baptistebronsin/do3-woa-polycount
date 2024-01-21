@@ -457,7 +457,7 @@ function GrandeCarteParticipant ({ groupe, participant, nom_participants, utilis
             {
                     est_association_participant ? (
                         <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'rgba(128, 128, 128, 0.8)', zIndex: 9 }}>
-                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur ? '530px' : '500px', zIndex: 10, padding: "10px 20px", borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
+                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', width: '1200px', height: message_erreur_email ? '400px' : '370px', zIndex: 10, padding: "10px 20px", borderRadius: '10px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.2)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                     <h1>Association d'un participant fictif à un utilisateur</h1>
                                     <button className="lien" onClick={ () => set_est_association_participant(false) }>Annuler</button>

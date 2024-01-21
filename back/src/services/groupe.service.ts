@@ -45,6 +45,34 @@ export const creer_groupe = async (nom: string, description: string | null, util
     return result;
 }
 
+export const modifier_groupe = async (groupe_id: number, nom: string, description: string | null, lien_image: string | null): Promise<Groupe> => {
+    const result: Groupe = await prisma.groupe.update({
+        data: {
+            nom: nom,
+            description: description,
+            lien_image: lien_image
+        },
+        where: {
+            pk_groupe_id: groupe_id
+        }
+    });
+
+    return result;
+}
+
+export const cloturer_groupe = async (groupe_id: number): Promise<Groupe> => {
+    const result: Groupe = await prisma.groupe.update({
+        data: {
+            cloture_le: new Date()
+        },
+        where: {
+            pk_groupe_id: groupe_id
+        }
+    });
+
+    return result;
+}
+
 export const ajouter_participant = async (groupe_id: number, utilisateur_id: number | null, nom: string | null, date_rejoint: Date | null): Promise<Participant_Groupe> => {
     const result: Participant_Groupe = await prisma.participant_Groupe.create({
         data: {

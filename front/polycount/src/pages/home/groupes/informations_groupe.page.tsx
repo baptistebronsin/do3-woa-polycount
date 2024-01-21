@@ -173,7 +173,7 @@ function InformationsGroupe() {
                 <InformationDepense groupe={ groupe } participant_actuel={ participant_actuel } nom_participants={ nom_participants } /> : 
                 section_selectionnee === 1 ?
                 <InformationParticipant groupe={ groupe } participants={ participants_groupe } utilisateurs={ utilisateurs }  nom_participants={ nom_participants } participant_actuel={ participant_actuel } ajouter_participant={ (p: ParticipantGroupe) => set_participants_groupe([...participants_groupe, p]) } ajouter_utilisateur={ (u: Utilisateur) => set_utilisateurs([...utilisateurs, u]) } set_participants={ set_participants_groupe } /> :
-                <ReglageGroupe />
+                <ReglageGroupe groupe={ groupe } participant_actuel={ participant_actuel } utilisateurs={ utilisateurs } modifier_groupe={ (g: Groupe) => set_groupe(g) } />
               }
             </div>
           )}

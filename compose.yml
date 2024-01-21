@@ -13,7 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   back:
-    image: baraly/polycount-back:0.1.1
+    image: baraly/polycount-back:0.1.2
     restart: always
     ports:
       - 8080:8080
@@ -24,7 +24,7 @@ services:
       - compose.env
 
   front:
-    image: baraly/polycount-front:0.1.3
+    image: baraly/polycount-front:0.1.4
     restart: always
     depends_on:
       - back
