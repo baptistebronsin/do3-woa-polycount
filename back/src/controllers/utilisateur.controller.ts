@@ -110,7 +110,7 @@ export const creation_compte: RequestHandler = async (req: Request, res: Respons
     }
 
     const mail = mail_utils.contenu.mail_bienvenue;
-    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_cree.genre)).replace(" $_NOM_$", (utilisateur_cree.genre ? " " + utilisateur_cree.nom : utilisateur_cree.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/verification_compte?email=" + utilisateur_cree.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_cree.genre)).replace(" $_NOM_$", (utilisateur_cree.genre ? " " + utilisateur_cree.nom : utilisateur_cree.prenom)).replace("$_URL_TOKEN_$", process.env.APP_URL! + "/verification?email=" + utilisateur_cree.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
     const etat_mail: boolean = await envoyer_mail(email_formate, mail.entete, contenu_mail);
 
     if (!etat_mail)
@@ -376,7 +376,7 @@ export const renouveller_verification_compte: RequestHandler = async (req: Reque
     }
 
     const mail = mail_utils.contenu.mail_verification_compte;
-    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/verification_compte?email=" + utilisateur_existant.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.APP_URL! + "/verification?email=" + utilisateur_existant.email + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
     const etat_mail: boolean = await envoyer_mail(email_formate, mail.entete, contenu_mail);
 
     if (!etat_mail)
@@ -935,7 +935,7 @@ export const modification_email: RequestHandler = async (req: Request, res: Resp
 
     // On l'informe du changement par mail
     const mail = mail_utils.contenu.mail_notification_changement;
-    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.API_URL! + "/utilisateur/verification_compte?email=" + email_formate + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
+    const contenu_mail: string = mail.contenu.replace("$_GENRE_$", genre_utilisateur(utilisateur_existant.genre)).replace(" $_NOM_$", (utilisateur_existant.genre ? " " + utilisateur_existant.nom : utilisateur_existant.prenom)).replace("$_URL_TOKEN_$", process.env.APP_URL! + "/verification?email=" + email_formate + "&token=" + token).replace("$_TEMPS_VALIDITE_TOKEN_$", temps_validation[type_token]) + mail.signature;
     const etat_mail: boolean = await envoyer_mail(email_formate, mail.entete, contenu_mail);
 
     if (!etat_mail)
