@@ -6,7 +6,7 @@ Ce dépôt GitHub contient toute la structure de l'application `Polycount`. Cell
 
 1. Téléchargez le contenu de l'application depuis son dépôt distant GitHub avec Git.
     ```bash
-    git clone https://github.com/Baraly/do3-woa-polycount.git
+    git clone https://github.com/baptistebronsin/do3-woa-polycount.git
     ```
 2. Veillez à être sur la branche `master`.
 3. Veuillez vérifier que `node` et `npm` sont bien installés sur votre machine.
